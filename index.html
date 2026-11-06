@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retro Arcade</title>
+<meta name="description" content="Free and open-source games you can play in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site-header">
+    <h1 class="logo"><a href="index.html" id="site-name">RETRO ARCADE</a></h1>
+    <p class="tagline" id="site-tagline"></p>
+    <div class="insert-coin"><span class="blink">&#9654; INSERT COIN</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <a class="tab" role="tab" href="#games" data-tab="games">&#127918; GAMES</a>
+    <a class="tab" role="tab" href="#hacks" data-tab="hacks">&#128190; ROM HACKS</a>
+    <a class="tab" role="tab" href="#projects" data-tab="projects">&#128736; PROJECTS</a>
+  </nav>
+
+  <!-- ===== GAMES ===== -->
+  <section id="tab-games" data-panel="games">
+    <div class="controls">
+      <input class="search" id="game-search" type="search" placeholder="Search games..." aria-label="Search games">
+      <label for="game-sort">SORT</label>
+      <select class="select" id="game-sort">
+        <option value="plays-desc">Most played</option>
+        <option value="plays-asc">Least played</option>
+        <option value="recent">Recently played (you)</option>
+        <option value="newest">Newest added</option>
+        <option value="az">Name A&ndash;Z</option>
+        <option value="za">Name Z&ndash;A</option>
+      </select>
+      <div class="chips" id="game-types"></div>
+      <div class="counter-note" id="counter-note"></div>
+    </div>
+    <div class="grid" id="game-grid"></div>
+  </section>
+
+  <!-- ===== ROM HACKS ===== -->
+  <section id="tab-hacks" data-panel="hacks" hidden>
+    <div class="panel notice">
+      <h2>&#9888; BRING YOUR OWN ROM</h2>
+      <p>ROM hacks like Unbound are released as <strong>patch files</strong>, not full games. This site doesn't host ROMs or patched games.</p>
+      <p>To play one: get the official patch from the hack's creators, then open the <a href="emulator.html">Retro Emulator</a> and pick your own legally-dumped base ROM plus the patch. It's patched inside your browser, so nothing gets uploaded anywhere.</p>
+    </div>
+    <div class="controls">
+      <input class="search" id="hack-search" type="search" placeholder="Search hacks..." aria-label="Search ROM hacks">
+      <label for="hack-sort">SORT</label>
+      <select class="select" id="hack-sort">
+        <option value="az">Name A&ndash;Z</option>
+        <option value="za">Name Z&ndash;A</option>
+        <option value="base">Base game</option>
+      </select>
+    </div>
+    <div class="grid" id="hack-grid"></div>
+  </section>
+
+  <!-- ===== PROJECTS ===== -->
+  <section id="tab-projects" data-panel="projects" hidden>
+    <div class="controls">
+      <input class="search" id="project-search" type="search" placeholder="Search projects..." aria-label="Search projects">
+      <label for="project-sort">SORT</label>
+      <select class="select" id="project-sort">
+        <option value="newest">Newest added</option>
+        <option value="az">Name A&ndash;Z</option>
+        <option value="za">Name Z&ndash;A</option>
+      </select>
+      <div class="chips" id="project-types"></div>
+    </div>
+    <div class="grid" id="project-grid"></div>
+  </section>
+
+  <footer class="site-footer">
+    <p>All games are open source and keep their original licenses. See each game's card for its source code.</p>
+    <p><button type="button" id="crt-toggle">Toggle CRT effect</button></p>
+  </footer>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/counter.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

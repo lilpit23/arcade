@@ -1,0 +1,14 @@
+[
+  {
+    "id": "example-project",
+    "title": "Example Project",
+    "type": "web",
+    "description": "This is a placeholder. Edit data/projects.json to add your own projects (see README).",
+    "link": "projects/example/index.html",
+    "repo": "",
+    "glyph": "NEW",
+    "color": "#ff2e88",
+    "tags": ["template"],
+    "added": "2026-11-06"
+  }
+]

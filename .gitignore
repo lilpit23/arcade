@@ -1,0 +1,14 @@
+*.gba
+*.gb
+*.gbc
+*.nes
+*.sfc
+*.smc
+*.n64
+*.z64
+*.v64
+*.nds
+*.bps
+*.ups
+*.ips
+.DS_Store

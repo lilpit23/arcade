@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retro Emulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="player-bar">
+    <a class="btn ghost" href="index.html#games">&larr; BACK</a>
+    <h1 class="player-title">RETRO EMULATOR</h1>
+    <span></span>
+  </div>
+
+  <div class="panel notice" id="hack-banner" hidden></div>
+
+  <div id="setup">
+    <div class="panel">
+      <h2>BRING YOUR OWN ROM</h2>
+      <p>Pick a game file from your own device. It's loaded straight into your browser and never uploaded. Save files and save states are stored in your browser.</p>
+      <p class="meta">Supported: GBA, GB/GBC, NES, SNES, N64, NDS, Genesis/Mega Drive, Master System, Game Gear, PS1 (.zip and .7z files work too)</p>
+    </div>
+
+    <div class="steps">
+      <div class="panel">
+        <div class="step-num">STEP 1 &middot; ROM</div>
+        <label class="file-drop" id="rom-drop">
+          <input type="file" id="rom-file">
+          Click or drop your ROM here
+          <span class="file-name" id="rom-name"></span>
+        </label>
+        <p style="margin-top:12px">
+          <label for="system">SYSTEM</label>
+          <select class="select" id="system">
+            <option value="">Auto-detect</option>
+            <option value="gba">Game Boy Advance</option>
+            <option value="gb">Game Boy / Color</option>
+            <option value="nes">NES</option>
+            <option value="snes">SNES</option>
+            <option value="n64">Nintendo 64</option>
+            <option value="nds">Nintendo DS</option>
+            <option value="segaMD">Genesis / Mega Drive</option>
+            <option value="segaMS">Master System</option>
+            <option value="segaGG">Game Gear</option>
+            <option value="psx">PlayStation</option>
+          </select>
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="step-num">STEP 2 &middot; PATCH (OPTIONAL)</div>
+        <label class="file-drop" id="patch-drop">
+          <input type="file" id="patch-file" accept=".ips,.ups,.bps">
+          For ROM hacks: drop the .bps / .ups / .ips patch
+          <span class="file-name" id="patch-name"></span>
+        </label>
+        <p class="meta" style="margin-top:12px">Leave this empty to play the ROM as it is.</p>
+      </div>
+
+      <div class="panel">
+        <div class="step-num">STEP 3 &middot; PLAY</div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="start" disabled>START</button>
+          <button class="btn ghost" type="button" id="download" disabled>SAVE PATCHED ROM</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen" hidden><div id="game"></div></div>
+  <p class="meta" id="after" hidden>To switch games, <a href="emulator.html">reload this page</a>. Powered by <a href="https://emulatorjs.org" target="_blank" rel="noopener">EmulatorJS</a>.</p>
+</div>
+<script src="js/config.js"></script>
+<script src="js/counter.js"></script>
+<script src="js/patcher.js"></script>
+<script src="js/emulator.js"></script>
+</body>
+</html>

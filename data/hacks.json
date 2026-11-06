@@ -1,0 +1,38 @@
+[
+  {
+    "id": "pokemon-unbound",
+    "title": "Pokémon Unbound",
+    "base": "Pokémon FireRed (USA) v1.0",
+    "system": "gba",
+    "patch": ".bps",
+    "description": "A full new region and story with modern mechanics, built on FireRed.",
+    "search": "Pokemon Unbound official patch pokecommunity"
+  },
+  {
+    "id": "pokemon-radical-red",
+    "title": "Pokémon Radical Red",
+    "base": "Pokémon FireRed (USA) v1.0",
+    "system": "gba",
+    "patch": ".bps / .ups",
+    "description": "A harder FireRed remake with competitive battles and quality-of-life changes.",
+    "search": "Pokemon Radical Red official patch"
+  },
+  {
+    "id": "pokemon-emerald-rogue",
+    "title": "Pokémon Emerald Rogue",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "patch": ".bps",
+    "description": "A roguelite run-based take on Emerald. Every run is different.",
+    "search": "Pokemon Emerald Rogue official patch"
+  },
+  {
+    "id": "pokemon-inclement-emerald",
+    "title": "Pokémon Inclement Emerald",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "patch": ".bps",
+    "description": "A difficulty hack of Emerald with updated mechanics and smarter trainers.",
+    "search": "Pokemon Inclement Emerald official patch"
+  }
+]
