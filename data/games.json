@@ -9,7 +9,10 @@
     "glyph": "2048",
     "color": "#edc22e",
     "controls": "Arrow keys / swipe",
-    "tags": ["casual", "numbers"],
+    "tags": [
+      "casual",
+      "numbers"
+    ],
     "license": "MIT",
     "source": "https://github.com/gabrielecirulli/2048",
     "added": "2026-11-06"
@@ -24,7 +27,10 @@
     "glyph": "HEX",
     "color": "#e74c3c",
     "controls": "Left / Right arrows, Space to pause",
-    "tags": ["fast", "colours"],
+    "tags": [
+      "fast",
+      "colours"
+    ],
     "license": "GPL-3.0",
     "source": "https://github.com/Hextris/hextris",
     "added": "2026-11-06"
@@ -39,7 +45,10 @@
     "glyph": "BIRD",
     "color": "#2ecc71",
     "controls": "Space / click / tap to flap",
-    "tags": ["one-button", "high-score"],
+    "tags": [
+      "one-button",
+      "high-score"
+    ],
     "license": "GPL-3.0",
     "source": "https://github.com/ellisonleao/clumsy-bird",
     "added": "2026-11-06"
@@ -54,7 +63,11 @@
     "glyph": "ADR",
     "color": "#444444",
     "controls": "Mouse",
-    "tags": ["text", "idle", "story"],
+    "tags": [
+      "text",
+      "idle",
+      "story"
+    ],
     "license": "MPL-2.0",
     "source": "https://github.com/doublespeakgames/adarkroom",
     "added": "2026-11-06"
@@ -69,7 +82,10 @@
     "glyph": "HEXGL",
     "color": "#00a8ff",
     "controls": "Arrows to steer, A / D to air-brake",
-    "tags": ["3d", "speed"],
+    "tags": [
+      "3d",
+      "speed"
+    ],
     "license": "MIT",
     "source": "https://github.com/BKcore/HexGL",
     "added": "2026-11-06"
@@ -84,10 +100,67 @@
     "glyph": "EMU",
     "color": "#9b59b6",
     "controls": "Keyboard or gamepad",
-    "tags": ["bring your own ROM", "rom hacks"],
+    "tags": [
+      "bring your own ROM",
+      "rom hacks"
+    ],
     "license": "GPL-3.0 (EmulatorJS)",
     "source": "https://github.com/EmulatorJS/EmulatorJS",
     "added": "2026-11-06",
     "direct": true
+  },
+  {
+    "id": "infinite-mario",
+    "title": "Infinite Mario",
+    "type": "platformer",
+    "description": "A fan-made Mario platformer with randomly generated levels.",
+    "path": "games/infinite-mario/index.html",
+    "glyph": "MARIO",
+    "color": "#e74c3c",
+    "controls": "Arrow keys to move, S to start / jump, A to run / fire",
+    "tags": [
+      "fan game",
+      "mario",
+      "platformer"
+    ],
+    "license": "Unlicense",
+    "source": "https://github.com/robertkleffner/mariohtml5",
+    "added": "2026-11-09"
+  },
+  {
+    "id": "pacman-canvas",
+    "title": "Pacman Canvas",
+    "type": "arcade",
+    "description": "A fan-made maze chase: eat the dots, dodge ghosts, and grab power pills.",
+    "path": "games/pacman-canvas/index.html",
+    "glyph": "PAC",
+    "color": "#f1c40f",
+    "controls": "Arrow keys / WASD / swipe; Space to pause",
+    "tags": [
+      "fan game",
+      "pacman",
+      "maze"
+    ],
+    "license": "CC0-1.0",
+    "source": "https://github.com/platzhersh/pacman-canvas",
+    "added": "2026-11-09"
+  },
+  {
+    "id": "tetris",
+    "title": "JavaScript Tetris",
+    "type": "puzzle",
+    "description": "A fan-made falling-block classic. Rotate and stack pieces to clear lines.",
+    "path": "games/tetris/index.html",
+    "glyph": "TET",
+    "color": "#9b59b6",
+    "controls": "Space to start, arrows to move / rotate / drop, Esc to quit",
+    "tags": [
+      "fan game",
+      "tetris",
+      "blocks"
+    ],
+    "license": "MIT",
+    "source": "https://github.com/jakesgordon/javascript-tetris",
+    "added": "2026-11-09"
   }
 ]

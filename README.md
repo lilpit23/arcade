@@ -56,3 +56,17 @@ GitHub Pages allows files up to 100 MB and about 1 GB per site.
 | EmulatorJS (loaded from CDN) | GPL-3.0 | https://github.com/EmulatorJS/EmulatorJS |
 
 Each game folder keeps its original license file.
+
+## Added fan projects
+
+These existing browser projects run locally through the arcade player, with no build step or external game server. Each folder includes its upstream license and commit in `UPSTREAM.md`.
+
+| Game | Upstream license | Source |
+|---|---|---|
+| Infinite Mario | Unlicense | https://github.com/robertkleffner/mariohtml5 |
+| Pacman Canvas | CC0-1.0 | https://github.com/platzhersh/pacman-canvas |
+| JavaScript Tetris | MIT | https://github.com/jakesgordon/javascript-tetris |
+
+Integration notes: Infinite Mario uses native startup instead of loading jQuery from a CDN; upstream background music is disabled. Pacman Canvas has upstream analytics, ads, obsolete app cache, and the PHP leaderboard UI disabled for static hosting; game audio and map files are local. Tetris is copied unchanged. These are unofficial fan projects. Upstream software licenses do not grant rights to third-party game names or artwork.
+
+For local development, run `python3 -m http.server 8000 --bind 127.0.0.1` from the repository root.

@@ -1,0 +1,2 @@
+Vendored from upstream commit e5c0c42f7dac0f3514a55eff656c6e22e95d68ed.
+See the arcade README for source and integration notes.
