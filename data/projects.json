@@ -58,5 +58,232 @@
       "shareware"
     ],
     "added": "2026-11-18"
+  },
+  {
+    "id": "pokerogue",
+    "title": "PokéRogue",
+    "type": "fan games",
+    "description": "Play on the project’s site. Catch Pokémon, collect items, and build a team across roguelite runs.",
+    "link": "https://pokerogue.net/",
+    "repo": "https://github.com/pagefaultgames/pokerogue",
+    "glyph": "ROGUE",
+    "color": "#5a52a8",
+    "tags": [
+      "pokemon",
+      "browser",
+      "roguelite"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-showdown",
+    "title": "Pokémon Showdown",
+    "type": "fan games",
+    "description": "Build a team or jump into a random online battle in the browser.",
+    "link": "https://play.pokemonshowdown.com/",
+    "repo": "https://github.com/smogon/pokemon-showdown",
+    "glyph": "VS",
+    "color": "#306dbc",
+    "tags": [
+      "pokemon",
+      "browser",
+      "multiplayer"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-reborn",
+    "title": "Pokémon Reborn",
+    "type": "fan games",
+    "description": "Download the standalone fan RPG for a new region, story, and battles on terrain that changes how moves work.",
+    "link": "https://www.rebornevo.com/pr/download/",
+    "glyph": "RBRN",
+    "color": "#8d3a60",
+    "tags": [
+      "pokemon",
+      "rpg",
+      "download"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-rejuvenation",
+    "title": "Pokémon Rejuvenation",
+    "type": "fan games",
+    "description": "Download a standalone RPG set in the Aevium region, with story chapters and field-based battles.",
+    "link": "https://www.rejuvenationgame.com/",
+    "glyph": "REJ",
+    "color": "#6b4690",
+    "tags": [
+      "pokemon",
+      "desktop",
+      "rpg"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-desolation",
+    "title": "Pokémon Desolation",
+    "type": "fan games",
+    "description": "Download a standalone RPG focused on story choices and exploration across the Ayrith region.",
+    "link": "https://www.rebornevo.com/deso/",
+    "glyph": "DESO",
+    "color": "#654ca4",
+    "tags": [
+      "pokemon",
+      "desktop",
+      "rpg"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-uranium",
+    "title": "Pokémon Uranium",
+    "type": "fan games",
+    "description": "Download a standalone adventure in Tandor with original creatures and Nuclear-type encounters.",
+    "link": "https://pokemonuranium.co/",
+    "glyph": "ATOM",
+    "color": "#4b803c",
+    "tags": [
+      "pokemon",
+      "desktop",
+      "rpg"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-insurgence",
+    "title": "Pokémon Insurgence",
+    "type": "fan games",
+    "description": "Download a standalone RPG with Delta Pokémon, the Torren region, and optional challenge modes.",
+    "link": "https://p-insurgence.com/",
+    "glyph": "INS",
+    "color": "#8d4163",
+    "tags": [
+      "pokemon",
+      "desktop",
+      "rpg"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-xenoverse",
+    "title": "Xenoverse: Per Aspera Ad Astra",
+    "type": "fan games",
+    "description": "Download a standalone Pokémon fan RPG set in the Eldiw region.",
+    "link": "https://www.weedle.it/",
+    "glyph": "XENO",
+    "color": "#703f82",
+    "tags": [
+      "pokemon",
+      "desktop",
+      "rpg"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokeclicker",
+    "title": "PokéClicker",
+    "type": "fan games",
+    "description": "Catch Pokémon and battle through regions in an idle game you can play in your browser.",
+    "link": "https://www.pokeclicker.com/",
+    "glyph": "CLICK",
+    "color": "#ac4f50",
+    "tags": [
+      "pokemon",
+      "browser",
+      "idle"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-auto-chess",
+    "title": "Pokémon Auto Chess",
+    "type": "fan games",
+    "description": "Draft Pokémon and build a team for battles that resolve automatically in your browser.",
+    "link": "https://pokemon-auto-chess.com/",
+    "glyph": "AUTO",
+    "color": "#486d9c",
+    "tags": [
+      "pokemon",
+      "browser",
+      "strategy"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-damage-calculator",
+    "title": "Pokémon Damage Calculator",
+    "type": "pokemon tools",
+    "description": "Compare attacks, items, and builds across generations before a battle.",
+    "link": "https://calc.pokemonshowdown.com/",
+    "glyph": "CALC",
+    "color": "#477c90",
+    "tags": [
+      "pokemon",
+      "competitive",
+      "calculator"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-showdown-dex",
+    "title": "Pokémon Showdown Dex",
+    "type": "pokemon tools",
+    "description": "Look up Pokémon, moves, abilities, and items used by the battle simulator.",
+    "link": "https://dex.pokemonshowdown.com/",
+    "glyph": "DEX",
+    "color": "#5164a0",
+    "tags": [
+      "pokemon",
+      "competitive",
+      "reference"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokepaste",
+    "title": "PokéPaste",
+    "type": "pokemon tools",
+    "description": "Share Pokémon teams as readable builds with moves, abilities, and held items.",
+    "link": "https://pokepast.es/",
+    "glyph": "PASTE",
+    "color": "#76618b",
+    "tags": [
+      "pokemon",
+      "competitive",
+      "teams"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "bulbapedia",
+    "title": "Bulbapedia",
+    "type": "pokemon tools",
+    "description": "Look up Pokémon mechanics, games, locations, and other series details in a community wiki.",
+    "link": "https://bulbapedia.bulbagarden.net/",
+    "glyph": "WIKI",
+    "color": "#608443",
+    "tags": [
+      "pokemon",
+      "wiki",
+      "reference"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "pokemon-database",
+    "title": "Pokémon Database",
+    "type": "pokemon tools",
+    "description": "Browse Pokédex entries, type matchups, moves, and evolution charts.",
+    "link": "https://pokemondb.net/",
+    "glyph": "DB",
+    "color": "#b35e3c",
+    "tags": [
+      "pokemon",
+      "pokedex",
+      "reference"
+    ],
+    "added": "2026-11-18"
   }
 ]

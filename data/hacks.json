@@ -34,5 +34,145 @@
     "patch": ".bps",
     "description": "A difficulty hack of Emerald with updated mechanics and smarter trainers.",
     "search": "Pokemon Inclement Emerald official patch"
+  },
+  {
+    "id": "pokemon-gaia",
+    "title": "Pokémon Gaia",
+    "base": "Pokémon FireRed (USA) v1.0",
+    "system": "gba",
+    "patch": ".ups",
+    "description": "A new adventure in the Orbtus region with a traditional Pokémon campaign.",
+    "search": "Pokemon Gaia Spherical Ice official UPS patch PokeCommunity"
+  },
+  {
+    "id": "pokemon-crystal-clear",
+    "title": "Pokémon Crystal Clear",
+    "base": "Pokémon Crystal (USA, Europe; check the release for the required revision)",
+    "system": "gb",
+    "patch": ".bps",
+    "description": "An open-world Crystal hack that lets you explore Johto and Kanto and challenge gyms in any order.",
+    "search": "Pokemon Crystal Clear ShockSlayer official BPS patch documentation"
+  },
+  {
+    "id": "pokemon-firered-rocket-edition",
+    "title": "Pokémon FireRed: Rocket Edition",
+    "base": "Pokémon FireRed (USA) v1.0",
+    "system": "gba",
+    "patch": ".ups",
+    "description": "Play as a Team Rocket grunt and see the events of FireRed from the other side.",
+    "search": "Pokemon FireRed Rocket Edition colonelsalt official UPS patch PokeCommunity"
+  },
+  {
+    "id": "pokemon-glazed",
+    "title": "Pokémon Glazed",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "patch": ".ups",
+    "description": "Explore Tunod and other regions in a new adventure built on Pokémon Emerald.",
+    "search": "Pokemon Glazed redriders180 official UPS patch PokeCommunity"
+  },
+  {
+    "id": "pokemon-emerald-seaglass",
+    "title": "Pokémon Emerald Seaglass",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "Revisit Hoenn with Game Boy Color-inspired visuals and updated encounters.",
+    "search": "Pokémon Emerald Seaglass Nemo622 official patch release"
+  },
+  {
+    "id": "pokemon-emerald-crest",
+    "title": "Pokémon Emerald Crest",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "Explore Hoenn with optional modes that change encounters and how you build a team.",
+    "search": "Pokémon Emerald Crest Aaghat official patch release"
+  },
+  {
+    "id": "pokemon-blazing-emerald",
+    "title": "Pokémon Blazing Emerald",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "Find new Hoenn regional forms and play through reworked battles.",
+    "search": "Pokémon Blazing Emerald Struedelmuffin official patch release"
+  },
+  {
+    "id": "pokemon-emerald-rowe",
+    "title": "Pokémon Emerald R.O.W.E.",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "Explore an open Hoenn and pick the order in which you challenge gyms.",
+    "search": "Pokémon Emerald R.O.W.E. R.O.W.E. rioluwott official patch release"
+  },
+  {
+    "id": "pokemon-theta-emerald-ex",
+    "title": "Pokémon Theta Emerald EX",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "Build teams from an expanded roster and use moves and mechanics from later generations.",
+    "search": "Pokémon Theta Emerald EX LCCoolJ95 official patch release"
+  },
+  {
+    "id": "pokemon-emerald-kaizo",
+    "title": "Pokémon Emerald Kaizo",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "A demanding Hoenn campaign built around tough trainer battles and team planning.",
+    "search": "Pokémon Emerald Kaizo SHF official patch release"
+  },
+  {
+    "id": "pokemon-emerald-run-and-bun",
+    "title": "Pokémon Emerald Run & Bun",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "A high-difficulty Hoenn hack with curated encounters and demanding battles.",
+    "search": "Pokémon Emerald Run & Bun Dekzeh official patch release"
+  },
+  {
+    "id": "pokemon-emerald-enhanced",
+    "title": "Pokémon Emerald Enhanced",
+    "base": "Pokémon Emerald (USA)",
+    "system": "gba",
+    "description": "An open-world take on Hoenn with quests and more flexible progression.",
+    "search": "Pokémon Emerald Enhanced Emerald Enhanced official patch release"
+  },
+  {
+    "id": "pokemon-dark-rising",
+    "title": "Pokémon Dark Rising",
+    "base": "Pokémon FireRed (USA; check the release for the required revision)",
+    "system": "gba",
+    "description": "A story-driven FireRed hack with a new region and a steep difficulty curve.",
+    "search": "Pokémon Dark Rising DarkRisingGirl official patch release"
+  },
+  {
+    "id": "pokemon-adventure-red-chapter",
+    "title": "Pokémon Adventure Red Chapter",
+    "base": "Pokémon FireRed (USA; check the release for the required revision)",
+    "system": "gba",
+    "description": "Follow Red through a campaign inspired by the Pokémon Adventures manga.",
+    "search": "Pokémon Adventure Red Chapter Aethestode official patch release"
+  },
+  {
+    "id": "pokemon-firered-extended",
+    "title": "Pokémon FireRed Extended",
+    "base": "Pokémon FireRed (USA; check the release for the required revision)",
+    "system": "gba",
+    "description": "Revisit Kanto with expanded encounters and more Pokémon to catch.",
+    "search": "Pokémon FireRed Extended DjTarma official patch release"
+  },
+  {
+    "id": "pokemon-firered-omega",
+    "title": "Pokémon FireRed Omega",
+    "base": "Pokémon FireRed (USA; check the release for the required revision)",
+    "system": "gba",
+    "description": "A tougher Kanto campaign with different starters and a broader set of encounters.",
+    "search": "Pokémon FireRed Omega Drayano official patch release"
+  },
+  {
+    "id": "pokemon-orange-islands",
+    "title": "Pokémon Orange Islands",
+    "base": "Pokémon FireRed (USA; check the release for the required revision)",
+    "system": "gba",
+    "description": "Visit the Orange Archipelago in a FireRed hack inspired by the anime.",
+    "search": "Pokémon Orange Islands Kalarie official patch release"
   }
 ]

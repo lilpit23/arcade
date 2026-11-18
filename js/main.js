@@ -154,7 +154,7 @@
         <div class="card-body">
           <h3 class="card-title">${esc(h.title)}</h3>
           <p class="card-desc">${esc(h.description)}</p>
-          <div class="meta">Base ROM: ${esc(h.base)}<br>Patch type: ${esc(h.patch)}</div>
+          <div class="meta">Base ROM: ${esc(h.base)}<br>Patch type: ${h.patch ? esc(h.patch) : "See release instructions"}</div>
           <div class="btn-row">
             <a class="btn" href="emulator.html?hack=${encodeURIComponent(h.id)}">PATCH &amp; PLAY</a>
             <a class="btn ghost" href="https://duckduckgo.com/?q=${encodeURIComponent(h.search)}" target="_blank" rel="noopener">GET PATCH</a>

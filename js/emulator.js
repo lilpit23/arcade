@@ -29,7 +29,7 @@
       $("#system").value = hack.system;
       $("#hack-banner").hidden = false;
       $("#hack-banner").innerHTML = `<h2>PATCHING: ${esc(hack.title)}</h2>
-        <p>You need: <strong>${esc(hack.base)}</strong> ROM (step 1) and the official ${esc(hack.patch)} patch (step 2).</p>
+        <p>You need: <strong>${esc(hack.base)}</strong> ROM (step 1) and the official${hack.patch ? " " + esc(hack.patch) : ""} patch (step 2).</p>
         <p class="meta">Don't have the patch? <a href="https://duckduckgo.com/?q=${encodeURIComponent(hack.search)}" target="_blank" rel="noopener">Find the official release</a>.</p>`;
     }).catch(() => {});
   }
