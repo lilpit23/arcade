@@ -154,10 +154,10 @@
         <div class="card-body">
           <h3 class="card-title">${esc(h.title)}</h3>
           <p class="card-desc">${esc(h.description)}</p>
-          <div class="meta">Base ROM: ${esc(h.base)}<br>Patch type: ${h.patch ? esc(h.patch) : "See release instructions"}</div>
+          <div class="meta">Base ROM: ${esc(h.base)}<br>${h.patchUrl ? "Patch loads in the arcade" : `Patch type: ${h.patch ? esc(h.patch) : "See release instructions"}`}</div>
           <div class="btn-row">
             <a class="btn" href="emulator.html?hack=${encodeURIComponent(h.id)}">PATCH &amp; PLAY</a>
-            <a class="btn ghost" href="https://duckduckgo.com/?q=${encodeURIComponent(h.search)}" target="_blank" rel="noopener">GET PATCH</a>
+            <a class="btn ghost" href="${h.releaseUrl ? esc(h.releaseUrl) : `https://duckduckgo.com/?q=${encodeURIComponent(h.search)}`}" target="_blank" rel="noopener">${h.releaseUrl ? "OFFICIAL RELEASE" : "GET PATCH"}</a>
           </div>
         </div>
       </article>`).join("") : `<div class="empty">NO HACKS FOUND</div>`;

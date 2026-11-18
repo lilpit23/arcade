@@ -40,7 +40,7 @@ Edit `js/config.js` to change the site name, tagline and play counter:
 2. Add an entry to `data/projects.json` with `title`, `type`, `description`, `link`, and optionally `repo`, `tags`, `glyph`, `color` and `added`.
 
 ## ROM hacks
-`data/hacks.json` lists hacks shown on the ROM HACKS tab. The site never hosts ROMs or patches. Players load their own base ROM and the official patch on `emulator.html`, and the patch is applied in the browser (`js/patcher.js` supports IPS, UPS and BPS). Don't commit ROM files or patched ROMs to this repo.
+`data/hacks.json` lists hacks shown on the ROM HACKS tab. Players supply their own base ROM, and `emulator.html` applies IPS, UPS or BPS patches in the browser. An entry with a `patchUrl` loads the creator's version-pinned patch automatically. Use a direct patch file URL that allows browser requests and set `releaseUrl` to the official release page. Players can also select a patch file manually. Don't commit ROM files or patched ROMs to this repo.
 
 ## Limits
 GitHub Pages allows files up to 100 MB and about 1 GB per site.

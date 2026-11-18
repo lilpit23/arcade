@@ -15,6 +15,7 @@
   let patch = null;    // { name, bytes }
   let output = null;   // Uint8Array ready to play
   let hack = null;
+  let manualPatchSelection = 0;
 
   const status = (msg, kind = "") => { const el = $("#status"); el.className = "status " + kind; el.innerHTML = msg; };
   const ext = (name) => (name.split(".").pop() || "").toLowerCase();
@@ -22,16 +23,42 @@
 
   // Preselected ROM hack (?hack=id)
   const hackId = new URLSearchParams(location.search).get("hack");
+  let patchState = hackId ? "loading" : "";
   if (hackId) {
-    fetch("data/hacks.json").then((r) => r.json()).then((list) => {
+    fetch("data/hacks.json").then((r) => r.json()).then(async (list) => {
       hack = list.find((h) => h.id === hackId);
-      if (!hack) return;
+      if (!hack) {
+        if (!manualPatchSelection) {
+          patchState = "";
+          prepare();
+        }
+        return;
+      }
       $("#system").value = hack.system;
+      const releaseUrl = hack.releaseUrl || `https://duckduckgo.com/?q=${encodeURIComponent(hack.search)}`;
       $("#hack-banner").hidden = false;
       $("#hack-banner").innerHTML = `<h2>PATCHING: ${esc(hack.title)}</h2>
-        <p>You need: <strong>${esc(hack.base)}</strong> ROM (step 1) and the official${hack.patch ? " " + esc(hack.patch) : ""} patch (step 2).</p>
-        <p class="meta">Don't have the patch? <a href="https://duckduckgo.com/?q=${encodeURIComponent(hack.search)}" target="_blank" rel="noopener">Find the official release</a>.</p>`;
-    }).catch(() => {});
+        <p>You need: <strong>${esc(hack.base)}</strong> ROM (step 1). ${hack.patchUrl
+          ? "The arcade loads the official patch for you."
+          : `Add the official${hack.patch ? " " + esc(hack.patch) : ""} patch in step 2.`}</p>
+        <p class="meta"><a href="${esc(releaseUrl)}" target="_blank" rel="noopener">${hack.releaseUrl ? "Official release" : "Find the official release"}</a></p>`;
+      if (manualPatchSelection) return;
+      if (!hack.patchUrl) {
+        patchState = "";
+        prepare();
+        return;
+      }
+      prepare();
+      const response = await fetch(hack.patchUrl, { signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      if (manualPatchSelection) return;
+      setPatch(`${hack.id}${hack.patch}`, bytes, true);
+    }).catch(() => {
+      if (manualPatchSelection) return;
+      patchState = "failed";
+      prepare();
+    });
   }
 
   function wireDrop(dropId, inputId, onFile) {
@@ -58,15 +85,32 @@
   });
 
   wireDrop("#patch-drop", "#patch-file", async (file) => {
-    patch = { name: file.name, bytes: await readFile(file) };
-    $("#patch-name").textContent = file.name;
+    const selection = ++manualPatchSelection;
+    patchState = "loading";
     prepare();
+    try {
+      const bytes = await readFile(file);
+      if (selection === manualPatchSelection) setPatch(file.name, bytes);
+    } catch {
+      if (selection !== manualPatchSelection) return;
+      patchState = "failed";
+      prepare();
+    }
   });
+
+  function setPatch(name, bytes, automatic = false) {
+    patch = { name, bytes, automatic };
+    patchState = "";
+    $("#patch-name").textContent = name;
+    prepare();
+  }
 
   function prepare() {
     output = null;
     $("#start").disabled = true;
     $("#download").disabled = true;
+    if (patchState === "loading") { status("Loading patch information…"); return; }
+    if (patchState === "failed") { status("Couldn’t load the patch. Add a patch file in step 2 or reload to retry.", "err"); return; }
     if (!rom) { status(patch ? "Now pick your base ROM in step 1." : ""); return; }
 
     if (!patch) {
@@ -79,6 +123,10 @@
       }
       try {
         const res = window.RomPatcher.apply(rom.bytes, patch.bytes);
+        if (patch.automatic && res.warnings.length) {
+          status("Patch failed: " + res.warnings.map(esc).join("<br>"), "err");
+          return;
+        }
         output = res.data;
         $("#download").disabled = false;
         status(res.warnings.length

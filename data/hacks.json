@@ -174,5 +174,15 @@
     "system": "gba",
     "description": "Visit the Orange Archipelago in a FireRed hack inspired by the anime.",
     "search": "Pokémon Orange Islands Kalarie official patch release"
+  },
+  {
+    "id": "pokemon-firered-leafgreen-plus",
+    "title": "Pokémon FireRed and LeafGreen+",
+    "base": "Pokémon FireRed (USA) v1.0",
+    "system": "gba",
+    "patch": ".bps",
+    "description": "Revisit Kanto with quality-of-life updates and ways to obtain Pokémon from both versions.",
+    "releaseUrl": "https://github.com/Deokishisu/FRLG-Plus/releases/tag/v1.5.1",
+    "patchUrl": "https://raw.githubusercontent.com/Deokishisu/FRLG-Plus/5d81c49c383d1197fcde608d304ed233def3bda2/patch/frlgPlus.bps"
   }
 ]
