@@ -216,5 +216,23 @@
     "license": "MIT",
     "source": "https://github.com/KilledByAPixel/LittleJS/tree/42619bd28010fb50e400686dcd475eccbd053256/examples/puzzle",
     "added": "2026-11-18"
+  },
+  {
+    "id": "hauberk",
+    "title": "Hauberk",
+    "type": "solo looter",
+    "description": "Explore randomized dungeons and equip the gear you find in this solo turn-based roguelike.",
+    "path": "games/hauberk/index.html",
+    "glyph": "LOOT",
+    "color": "#b97734",
+    "controls": "Keyboard. See the in-game help for movement and inventory shortcuts.",
+    "tags": [
+      "dungeon crawler",
+      "gear",
+      "turn-based"
+    ],
+    "license": "MIT",
+    "source": "https://github.com/munificent/hauberk",
+    "added": "2026-11-18"
   }
 ]

@@ -8,7 +8,55 @@
     "repo": "",
     "glyph": "NEW",
     "color": "#ff2e88",
-    "tags": ["template"],
+    "tags": [
+      "template"
+    ],
     "added": "2026-11-06"
+  },
+  {
+    "id": "dungeon-crawl-stone-soup",
+    "title": "Dungeon Crawl Stone Soup",
+    "type": "solo looter",
+    "description": "Find equipment, spells and consumables in a turn-based solo dungeon run. Choose a WebTiles server for browser play.",
+    "link": "https://crawl.develz.org/play.htm",
+    "repo": "https://github.com/crawl/crawl",
+    "glyph": "DCSS",
+    "color": "#3d8b79",
+    "tags": [
+      "roguelike",
+      "webtiles"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "shattered-pixel-dungeon",
+    "title": "Shattered Pixel Dungeon",
+    "type": "solo looter",
+    "description": "Collect randomized gear, rings and artifacts. Download the game for a supported device from the official releases.",
+    "link": "https://github.com/00-Evan/shattered-pixel-dungeon/releases",
+    "repo": "https://github.com/00-Evan/shattered-pixel-dungeon",
+    "glyph": "SPD",
+    "color": "#8861ad",
+    "tags": [
+      "roguelike",
+      "download"
+    ],
+    "added": "2026-11-18"
+  },
+  {
+    "id": "diabloweb",
+    "title": "DiabloWeb",
+    "type": "solo looter",
+    "description": "Fight through dungeons in real time and collect gear. The hosted port offers shareware play and requires your original Diablo data for the full game.",
+    "link": "https://d07RiV.github.io/diabloweb/",
+    "repo": "https://github.com/d07RiV/diabloweb",
+    "glyph": "D1",
+    "color": "#af3939",
+    "tags": [
+      "action RPG",
+      "browser",
+      "shareware"
+    ],
+    "added": "2026-11-18"
   }
 ]
