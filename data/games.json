@@ -162,5 +162,59 @@
     "license": "MIT",
     "source": "https://github.com/jakesgordon/javascript-tetris",
     "added": "2026-11-09"
+  },
+  {
+    "id": "space-huggers",
+    "title": "Space Huggers",
+    "type": "platformer",
+    "description": "Run and gun through destructible alien outposts, solo or in local co-op.",
+    "path": "games/space-huggers/index.html",
+    "glyph": "SPACE",
+    "color": "#27ae60",
+    "controls": "WASD to move and jump, Z to shoot, X to roll, C to throw a grenade; gamepads for local co-op",
+    "tags": [
+      "action",
+      "roguelike",
+      "local co-op"
+    ],
+    "license": "GPL-3.0",
+    "source": "https://github.com/KilledByAPixel/SpaceHuggers",
+    "added": "2026-11-18"
+  },
+  {
+    "id": "littlejs-breakout",
+    "title": "LittleJS Breakout",
+    "type": "arcade",
+    "description": "Bounce a ball off your paddle to clear rows of colorful bricks.",
+    "path": "games/littlejs/examples/breakout/index.html",
+    "glyph": "BRICK",
+    "color": "#e67e22",
+    "controls": "Click or tap to launch, move the paddle with mouse or touch; gamepad supported",
+    "tags": [
+      "brick breaker",
+      "touch",
+      "high-score"
+    ],
+    "license": "MIT",
+    "source": "https://github.com/KilledByAPixel/LittleJS/tree/42619bd28010fb50e400686dcd475eccbd053256/examples/breakout",
+    "added": "2026-11-18"
+  },
+  {
+    "id": "littlejs-puzzle",
+    "title": "LittleJS Puzzle",
+    "type": "puzzle",
+    "description": "Swap neighboring tiles to make matches of three and chain combos.",
+    "path": "games/littlejs/examples/puzzle/index.html",
+    "glyph": "MATCH",
+    "color": "#8e44ad",
+    "controls": "Drag with mouse or touch to swap tiles; R to reset",
+    "tags": [
+      "match three",
+      "touch",
+      "casual"
+    ],
+    "license": "MIT",
+    "source": "https://github.com/KilledByAPixel/LittleJS/tree/42619bd28010fb50e400686dcd475eccbd053256/examples/puzzle",
+    "added": "2026-11-18"
   }
 ]
