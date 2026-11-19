@@ -8,12 +8,29 @@ const stub = 0x7ff800; // verified unused padding in both pinned USA images
 const base = 0x08000000;
 const signature = 0x31595254;
 
+// Fresh boots enter the native title menu. Each edit is a Thumb halfword
+// in a startup scene. Check the original instruction before changing it.
+const openingEdits = [
+  // Finish the legal screen timer, leave the logo loop, and skip the movie.
+  [[0xe014,0xd308,0x46c0], [0x3b8,0x4911,0xe011], [0x3e2,0xf00c,0xe000]],
+  // Bypass the splash modes and call the native title factory, which also
+  // installs its own mode. Skip the redundant install in the boot loop.
+  [[0x1b8,0x2000,0xe003], [0x1e4,0x2000,0xe003], [0x1f2,0xfda4,0xfdc1],
+   [0x1f4,0xf01f,0x46c0], [0x1f6,0xf86b,0x46c0]],
+  // Bypass the two splash modes before normal title initialization.
+  [[0x41a6,0x2000,0xe003], [0x41d2,0x2000,0xe003]]
+];
+
 export function chapterImage(chapter, buffer) {
   const bytes = new Uint8Array(buffer.slice(0));
+  const view = new DataView(bytes.buffer);
+  for (const [offset, original, replacement] of openingEdits[chapter]) {
+    if (view.getUint16(offset,true) !== original) throw new Error('Unexpected opening sequence.');
+    view.setUint16(offset,replacement,true);
+  }
   if (chapter === 2) return bytes;
   if (bytes.length !== 0x800000 || !bytes.subarray(stub,stub+0x500).every(b=>b===255))
     throw new Error('Unsupported cartridge layout.');
-  const view = new DataView(bytes.buffer);
   const write = (offset, value) => view.setUint32(offset, value, true);
   // Ending callback: load two identifying values and wait for the browser
   // chapter transition. Interrupts and video frames continue during the wait.
