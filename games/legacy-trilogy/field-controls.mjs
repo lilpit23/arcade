@@ -131,16 +131,28 @@ export function attachControls(emu, code) {
     for (const key of held) if (!keys.includes(key)) { manager.simulateInput(0,key,0); held.delete(key); }
     for (const key of keys) if (!held.has(key)) { manager.simulateInput(0,key,1); held.add(key); }
   }
-  function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
-  function arrive(dir) { stop(); if (interact.checked) press(dir); }
+  let act = 0;   // bumped by every new order, so a pending A press is cancelled
+  function stop() { order=null; marker=null; lastHero=null; nav=null; act++; inputs(); }
+  function arrive(dirs) { stop(); if (interact.checked) press(dirs); }
   // Walked onto open ground: just stop, no button press.
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
   function field() { const s = readField(code, manager.getState()); if (s) startUsed = true; return s; }
-  async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
-  // Turn toward a direction, then press A: talks, opens, picks up or reads what is there.
-  function press(dir) {
-    inputs(dir ? [dir] : []);
-    setTimeout(() => { inputs(); if (clickMode.checked) tap(A); }, 90);
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  async function tap(key, ms=70) { inputs(); manager.simulateInput(0,key,1); await wait(ms); manager.simulateInput(0,key,0); }
+  // Settle, turn toward the target, then press A: talks, opens, picks up or reads what
+  // is there. If no text box opens, try again facing along the other axis (someone
+  // standing diagonally). Any new click or key press cancels it.
+  async function press(dirs) {
+    const id = act;
+    for (const dir of dirs) {
+      await wait(120); if (id !== act) return;
+      inputs([dir]); await wait(130); inputs(); await wait(70);
+      if (id !== act || !clickMode.checked) return;
+      await tap(A, 110); await wait(450);
+      if (id !== act || !layouts[code].dialog) return;
+      const s = field();
+      if (!s || s.talking) return;
+    }
   }
 
   // ---------- overlay: hover label, click markers, target ring ----------
@@ -290,6 +302,8 @@ export function attachControls(emu, code) {
     return keys;
   }
   function face(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? (dx<0?LEFT:RIGHT) : (dy<0?UP:DOWN); }
+  // Both ways to face something: the main axis first, then the other one.
+  function faces(dx, dy) { const h = dx<0?LEFT:RIGHT, v = dy<0?UP:DOWN; return Math.abs(dx) > Math.abs(dy) ? [h,v] : [v,h]; }
 
   function tick() {
     if (!order && !retaliate.checked) { latest = null; return; }
@@ -322,8 +336,7 @@ export function attachControls(emu, code) {
       lastHero = hero; return;
     }
     if ((order.kind === 'talk' || order.kind === 'use') && dist <= 20) {
-      const dir = face(dx,dy);
-      order = null; nav = null; press(dir);
+      stop(); press(faces(dx,dy));
       return;
     }
     if (dist > 4) order.face = face(dx,dy);
@@ -348,14 +361,14 @@ export function attachControls(emu, code) {
       return true;
     };
     // Gave up close to the spot: something is probably standing there, so press A on it.
-    const giveUp = () => { if (order.kind === 'walk' && dist <= 20) arrive(face(dx,dy)); else stop(); };
+    const giveUp = () => { if (order.kind === 'walk' && dist <= 20) arrive(faces(dx,dy)); else stop(); };
     if (dist < nav.best-1) { nav.best = dist; nav.idle = 0; }
     else if (++nav.idle > 60 && !flip()) { giveUp(); return; }
     nav.stall = moved < 0.4 ? nav.stall+1 : 0;
     if (!nav.follow) {
       if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4)); return; }
       // Bumped into something right where you clicked (a person, chest or sign): use it.
-      if (order.kind === 'walk' && dist <= 20) { arrive(face(dx,dy)); return; }
+      if (order.kind === 'walk' && dist <= 20) { arrive(faces(dx,dy)); return; }
       const lean = exact - Math.round(exact);
       if (!nav.flips) nav.side = lean >= 0 ? 1 : -1;
       nav = {...nav, follow:true, stall:0, turns:0, ticks:0, start:dist};
