@@ -1,0 +1,9 @@
+[submodule "upstream/buus-fury"]
+	path = upstream/buus-fury
+	url = https://github.com/prof64/buus-fury-decomp.git
+[submodule "upstream/legacy-1"]
+	path = upstream/legacy-1
+	url = https://github.com/mstan/DragonBallZLegacyOfGokuRecomp.git
+[submodule "upstream/legacy-2"]
+	path = upstream/legacy-2
+	url = https://github.com/mstan/DragonBallZLegacyofGokuIIRecomp.git
