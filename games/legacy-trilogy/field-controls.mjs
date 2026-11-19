@@ -1,9 +1,9 @@
 // Point-and-click field controls for the three USA cartridges.
 // Memory layouts are read from the pinned mGBA MEM chunk.
 const layouts = {
-  ALGE: {player:0x030007b8, list:0x03000610, camera:0x03000608, dialog:0x030009cc},
+  ALGE: {player:0x030007b8, list:0x03000610, camera:0x03000608, dialog:[0x030009cc,0x03003b60]},
   ALFE: {player:0x03001fa8, list:0x03001124, camera:0x0300109c, position:0x158},
-  BG3E: {player:0x03001c34, list:0x03001bb0, camera:0x030019bc, position:0x1a0, dialog:0x03002a5c}
+  BG3E: {player:0x03001c34, list:0x03001bb0, camera:0x030019bc, position:0x1a0, dialog:[0x03002a5c]}
 };
 // Script callbacks that mark talkable people and inspectable objects (first game).
 const talkers = new Set([0x080057a9]);
@@ -30,7 +30,8 @@ export function readField(code, bytes) {
     {x:word(layout.camera), y:word(layout.camera+4)};
   const count = word(layout.list);
   if (count < 0 || count > 256) return;
-  const talking = layout.dialog ? view.getUint8(offset(layout.dialog)) !== 0 : false;
+  // A text box (conversation, sign, item description) or menu is open.
+  const talking = (layout.dialog || []).some(a => view.getUint8(offset(a)) !== 0);
   const objects = [];
   let nearest, distance = Infinity;
   for (let i=0; i<count; i++) {
@@ -43,9 +44,10 @@ export function readField(code, bytes) {
       if (c >= 0x02013224 && c < 0x02030000 && !((c-0x02013224)%0x278)) {
         if (half(c+0x9a) === 2 && word(c+0x4c) > 0) found = {...at, kind:'enemy'};
       } else {
+        // Anything else placed on the map (people, items, signs) can be pressed with A.
         const script = word(p+0x38) >>> 0;
         if (talkers.has(script)) found = {...at, kind:'talk'};
-        else if (things.has(script)) found = {...at, kind:'use'};
+        else if (things.has(script) || half(p+0x20) || half(p+0x22)) found = {...at, kind:'use'};
       }
     } else {
       if (code === 'ALFE') {
@@ -66,6 +68,7 @@ export function readField(code, bytes) {
 
 // GBA buttons as RetroPad IDs.
 const A=8, UP=4, DOWN=5, LEFT=6, RIGHT=7;
+const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
 export function attachControls(emu, code) {
@@ -73,16 +76,18 @@ export function attachControls(emu, code) {
   const canvas = emu.canvas;
   const clickMode = document.querySelector('#walk');
   const retaliate = document.querySelector('#battle');
+  const interact = document.querySelector('#interact');
   const held = new Set();
   // order: {kind, x, y, id?}; marker: where the click landed, drawn as an X.
   let order=null, marker=null, lastHero=null, nav=null, pulse=0;
   let latest=null;
 
-  try {
-    clickMode.checked = localStorage.getItem('trilogy.click') !== 'off';
-    retaliate.checked = localStorage.getItem('trilogy.retaliate') === 'on';
-  } catch { clickMode.checked = true; }
-  clickMode.onchange = () => { stop(); remember('trilogy.click', clickMode.checked); };
+  // Point and click and auto-interact start on every time a chapter opens.
+  clickMode.checked = true;
+  interact.checked = true;
+  try { retaliate.checked = localStorage.getItem('trilogy.retaliate') === 'on'; } catch {}
+  clickMode.onchange = () => stop();
+  interact.onchange = () => stop();
   retaliate.onchange = () => { stop(); remember('trilogy.retaliate', retaliate.checked); };
   function remember(key, on) { try { localStorage.setItem(key, on ? 'on' : 'off'); } catch {} }
 
@@ -91,9 +96,15 @@ export function attachControls(emu, code) {
     for (const key of keys) if (!held.has(key)) { manager.simulateInput(0,key,1); held.add(key); }
   }
   function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
+  function arrive(dir) { stop(); if (interact.checked) press(dir); }
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
   function field() { return readField(code, manager.getState()); }
   async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
+  // Turn toward a direction, then press A: talks, opens, picks up or reads what is there.
+  function press(dir) {
+    inputs(dir ? [dir] : []);
+    setTimeout(() => { inputs(); if (clickMode.checked) tap(A); }, 90);
+  }
 
   // ---------- overlay: hover label, click markers, target ring ----------
   const overlay = document.createElement('canvas');
@@ -133,7 +144,8 @@ export function attachControls(emu, code) {
       const d = Math.hypot(dx,dy);
       if (d < bestD) { best=o; bestD=d; }
     }
-    return best ? {...best} : {kind:'walk', x:wx, y:wy};
+    // Walk so your feet land where you clicked: a click on someone's body aims at where they stand.
+    return best ? {...best} : {kind:'walk', x:wx, y:wy+FEET};
   }
 
   function draw() {
@@ -161,7 +173,7 @@ export function attachControls(emu, code) {
   function give(o) {
     stop();
     order = {...o, until: performance.now() + (o.kind==='enemy' ? 30000 : 9000)};
-    marker = {x:o.x, y:o.kind==='walk'?o.y:o.y-8, red:o.kind!=='walk', until:performance.now()+600};
+    marker = {x:o.x, y:o.kind==='walk'?o.y-FEET:o.y-8, red:o.kind!=='walk', until:performance.now()+600};
   }
   canvas.addEventListener('pointermove', event => {
     if (!clickMode.checked || busy()) { label.style.display='none'; return; }
@@ -195,7 +207,7 @@ export function attachControls(emu, code) {
     if (!state || !pt || state.talking) return;
     const hit = pick(state, pt), options = [];
     if (hit.kind !== 'walk') options.push([verbs[hit.kind], () => give(hit)]);
-    options.push(['Walk here', () => give({kind:'walk', x:state.camera.x+pt.x, y:state.camera.y+pt.y})]);
+    options.push(['Walk here', () => give({kind:'walk', x:state.camera.x+pt.x, y:state.camera.y+pt.y+FEET})]);
     options.push(['Cancel', () => {}]);
     menu.replaceChildren();
     const head = document.createElement('div');
@@ -258,11 +270,11 @@ export function attachControls(emu, code) {
     }
     if ((order.kind === 'talk' || order.kind === 'use') && dist <= 20) {
       const dir = face(dx,dy);
-      order = null; inputs([dir]);
-      setTimeout(() => { inputs(); if (!clickMode.checked) return; tap(A); }, 90);
+      order = null; nav = null; press(dir);
       return;
     }
-    if (order.kind === 'walk' && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) { stop(); return; }
+    if (dist > 4) order.face = face(dx,dy);
+    if (order.kind === 'walk' && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) { arrive(order.face); return; }
 
     // Walk straight at the goal. When blocked, follow the obstacle's edge
     // (always turning the same way) until the way toward the goal opens up.
@@ -270,27 +282,33 @@ export function attachControls(emu, code) {
     lastHero = hero;
     nav ||= {follow:false, dir:0, side:1, stall:0, turns:0, ticks:0, best:dist, idle:0, flips:0};
     // Going around this way isn't working: follow the edge the other way instead.
+    const exact = heading(dx, dy), goal = ((Math.round(exact) % 8) + 8) % 8;
     const flip = () => {
       if (++nav.flips > 3) return false;
       nav.side = -nav.side; nav.follow = true; nav.turns = 0; nav.idle = 0; nav.best = dist; nav.ticks = 0;
-      nav.dir = (nav.dir + 4) % 8;
+      nav.dir = (goal + nav.side + 8) % 8;
       return true;
     };
+    // Gave up close to the spot: something is probably standing there, so press A on it.
+    const giveUp = () => { if (order.kind === 'walk' && dist <= 28) arrive(face(dx,dy)); else stop(); };
     if (dist < nav.best-1) { nav.best = dist; nav.idle = 0; }
-    else if (++nav.idle > 60 && !flip()) { stop(); return; }
+    else if (++nav.idle > 60 && !flip()) { giveUp(); return; }
     nav.stall = moved < 0.4 ? nav.stall+1 : 0;
-    const exact = heading(dx, dy), goal = ((Math.round(exact) % 8) + 8) % 8;
     if (!nav.follow) {
       if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4)); return; }
+      // Bumped into something right where you clicked (a person, chest or sign): use it.
+      if (order.kind === 'walk' && dist <= 28) { arrive(face(dx,dy)); return; }
       const lean = exact - Math.round(exact);
       if (!nav.flips) nav.side = lean >= 0 ? 1 : -1;
-      nav = {...nav, follow:true, stall:0, turns:0, ticks:0};
+      nav = {...nav, follow:true, stall:0, turns:0, ticks:0, start:dist};
       nav.dir = (goal + nav.side + 8) % 8;
     } else {
       nav.ticks++;
       if (nav.stall >= 3) {
         nav.dir = (nav.dir + nav.side + 8) % 8; nav.stall = 0;
-        if (++nav.turns > 10 && !flip()) { stop(); return; }   // boxed in
+        // This side would lead well away from the goal before getting anywhere: try the other side.
+        if (gap(nav.dir, goal) >= 3 && nav.best >= nav.start-1 && nav.flips === 0) flip();
+        else if (++nav.turns > 10 && !flip()) { giveUp(); return; }   // boxed in
       } else if (nav.ticks % 6 === 0) {
         // Try leaning back toward the goal.
         const back = (nav.dir - nav.side + 8) % 8;
