@@ -3,7 +3,7 @@
 const layouts = {
   ALGE: {player:0x030007b8, list:0x03000610, camera:0x03000608, dialog:0x030009cc},
   ALFE: {player:0x03001fa8, list:0x03001124, camera:0x0300109c, position:0x158},
-  BG3E: {player:0x03001c34, list:0x03001bb0, camera:0x030019bc, position:0x1a0}
+  BG3E: {player:0x03001c34, list:0x03001bb0, camera:0x030019bc, position:0x1a0, dialog:0x03002a5c}
 };
 // Script callbacks that mark talkable people and inspectable objects (first game).
 const talkers = new Set([0x080057a9]);
@@ -75,7 +75,7 @@ export function attachControls(emu, code) {
   const retaliate = document.querySelector('#battle');
   const held = new Set();
   // order: {kind, x, y, id?}; marker: where the click landed, drawn as an X.
-  let order=null, marker=null, lastHero=null, stalled=0, detour=null, detours=0, pulse=0, until=0;
+  let order=null, marker=null, lastHero=null, nav=null, pulse=0;
   let latest=null;
 
   try {
@@ -90,7 +90,7 @@ export function attachControls(emu, code) {
     for (const key of held) if (!keys.includes(key)) { manager.simulateInput(0,key,0); held.delete(key); }
     for (const key of keys) if (!held.has(key)) { manager.simulateInput(0,key,1); held.add(key); }
   }
-  function stop() { order=null; marker=null; lastHero=null; stalled=0; detour=null; detours=0; inputs(); }
+  function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
   function field() { return readField(code, manager.getState()); }
   async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
@@ -214,6 +214,10 @@ export function attachControls(emu, code) {
   document.addEventListener('pointerdown', e => { if (!menu.contains(e.target)) menu.style.display='none'; });
 
   // ---------- movement ----------
+  // Eight headings, clockwise from east (screen y points down).
+  const DIRS = [[RIGHT],[RIGHT,DOWN],[DOWN],[DOWN,LEFT],[LEFT],[LEFT,UP],[UP],[UP,RIGHT]];
+  const heading = (dx, dy) => Math.atan2(dy, dx) / (Math.PI/4);
+  const gap = (a, b) => { const d = Math.abs(a-b) % 8; return Math.min(d, 8-d); };
   function steer(dx, dy, slack=3) {
     const keys = [];
     if (dx < -slack) keys.push(LEFT); else if (dx > slack) keys.push(RIGHT);
@@ -247,7 +251,7 @@ export function attachControls(emu, code) {
 
     if (order.kind === 'enemy' && dist <= 18) {
       // Face the opponent, then tap A and release between punches.
-      detour = null; stalled = 0;
+      nav = null;
       pulse = (pulse+1)%4;
       inputs(pulse===1 ? [face(dx,dy)] : pulse===2 ? [A] : []);
       lastHero = hero; return;
@@ -260,23 +264,41 @@ export function attachControls(emu, code) {
     }
     if (order.kind === 'walk' && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) { stop(); return; }
 
-    // Blocked? Step sideways around the obstacle, then try again.
+    // Walk straight at the goal. When blocked, follow the obstacle's edge
+    // (always turning the same way) until the way toward the goal opens up.
     const moved = lastHero ? Math.hypot(hero.x-lastHero.x, hero.y-lastHero.y) : 1;
     lastHero = hero;
-    if (detour) {
-      if (--detour.ticks <= 0) detour = null;
-      else { inputs(detour.keys); return; }
+    nav ||= {follow:false, dir:0, side:1, stall:0, turns:0, ticks:0, best:dist, idle:0, flips:0};
+    // Going around this way isn't working: follow the edge the other way instead.
+    const flip = () => {
+      if (++nav.flips > 3) return false;
+      nav.side = -nav.side; nav.follow = true; nav.turns = 0; nav.idle = 0; nav.best = dist; nav.ticks = 0;
+      nav.dir = (nav.dir + 4) % 8;
+      return true;
+    };
+    if (dist < nav.best-1) { nav.best = dist; nav.idle = 0; }
+    else if (++nav.idle > 60 && !flip()) { stop(); return; }
+    nav.stall = moved < 0.4 ? nav.stall+1 : 0;
+    const exact = heading(dx, dy), goal = ((Math.round(exact) % 8) + 8) % 8;
+    if (!nav.follow) {
+      if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4)); return; }
+      const lean = exact - Math.round(exact);
+      if (!nav.flips) nav.side = lean >= 0 ? 1 : -1;
+      nav = {...nav, follow:true, stall:0, turns:0, ticks:0};
+      nav.dir = (goal + nav.side + 8) % 8;
+    } else {
+      nav.ticks++;
+      if (nav.stall >= 3) {
+        nav.dir = (nav.dir + nav.side + 8) % 8; nav.stall = 0;
+        if (++nav.turns > 10 && !flip()) { stop(); return; }   // boxed in
+      } else if (nav.ticks % 6 === 0) {
+        // Try leaning back toward the goal.
+        const back = (nav.dir - nav.side + 8) % 8;
+        if (gap(back, goal) < gap(nav.dir, goal)) nav.dir = back;
+        if (nav.dir === goal) { nav.follow = false; nav.turns = 0; }
+      }
     }
-    stalled = moved < 0.5 ? stalled+1 : 0;
-    if (stalled >= 4) {
-      stalled = 0;
-      if (++detours > 6) { stop(); return; }
-      const side = detours % 2 ? 1 : -1;
-      const keys = Math.abs(dx) > Math.abs(dy) ? [side>0?DOWN:UP] : [side>0?RIGHT:LEFT];
-      detour = {keys, ticks: 4 + 2*detours};
-      inputs(detour.keys); return;
-    }
-    inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4));
+    inputs(DIRS[nav.dir]);
   }
   const timer = setInterval(tick, 50);
   function suspend() { stop(); }
