@@ -5,6 +5,8 @@ const layouts = {
   ALFE: {player:0x03001fa8, list:0x03001124, camera:0x0300109c, position:0x158},
   BG3E: {player:0x03001c34, list:0x03001bb0, camera:0x030019bc, position:0x1a0, dialog:[0x03002a5c]}
 };
+// The game's own Text Speed option (first game: Low 0, Medium 1, High 2).
+const textSpeed = {ALGE: {address:0x03000020, fastest:2}};
 // Script callbacks that mark talkable people and inspectable objects (first game).
 const talkers = new Set([0x080057a9]);
 const things = new Set([0x08005d05]);
@@ -67,7 +69,11 @@ export function readField(code, bytes) {
 }
 
 // GBA buttons as RetroPad IDs.
-const A=8, B=0, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7;
+const A=8, B=0, SELECT=2, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7, L=10, R=11;
+// Keyboard: WASD or arrows to move, several choices for each button so any keyboard works.
+const keyMap = {w:UP, a:LEFT, s:DOWN, d:RIGHT, ArrowUp:UP, ArrowLeft:LEFT, ArrowDown:DOWN, ArrowRight:RIGHT,
+  ' ':A, j:A, z:A, Numpad4:A, k:B, x:B, Numpad6:B, Enter:START, e:START, q:SELECT, Shift:SELECT,
+  u:L, Numpad7:L, i:R, Numpad9:R};
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
@@ -82,23 +88,34 @@ export function attachControls(emu, code) {
   let order=null, marker=null, lastHero=null, nav=null, pulse=0;
   let latest=null, stuck=null, startUsed=false;   // the first click on a title screen presses Start
 
-  // The emulator only reads the keyboard while its game area has focus. Our click
-  // handling cancels the browser's own focus change, so focus it ourselves.
+  // The emulator only reads keys while its own game area has focus, which is easy to
+  // lose (clicking a checkbox, the page around the game). Read the keyboard for the
+  // whole player instead, and let the campaign page forward keys pressed outside it.
   const keys = emu.elements.parent;
   const focusGame = () => { if (document.activeElement !== keys) keys.focus({preventScroll:true}); };
   focusGame();
-  // Extra keys for keyboards without a numpad, alongside the configured ones.
-  const extra = {Enter:START, ' ':A, j:A, z:A, k:B, x:B};
-  const alias = e => extra[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-  keys.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key.toLowerCase() === 'e') startUsed = true;
-    const button = alias(e);
-    if (button === undefined || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    e.preventDefault();
-    manager.simulateInput(0, button, 1);
-  });
-  keys.addEventListener('keyup', e => { const button = alias(e); if (button !== undefined) manager.simulateInput(0, button, 0); });
+  const down = new Set();
+  function key(e, pressed) {
+    if (busy() || e.ctrlKey || e.metaKey || e.altKey) return false;
+    const name = e.code && e.code.startsWith('Numpad') ? e.code : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+    const button = keyMap[name];
+    if (button === undefined) return false;
+    if (pressed) {
+      if (button === START) startUsed = true;
+      if (down.has(name)) return true;         // key repeat
+      down.add(name); stop();                   // the keyboard takes over from a click order
+    } else down.delete(name);
+    manager.simulateInput(0, button, pressed ? 1 : 0);
+    return true;
+  }
+  const onKey = pressed => e => { if (key(e, pressed)) { e.preventDefault(); e.stopPropagation(); } };
+  window.addEventListener('keydown', onKey(true), true);
+  window.addEventListener('keyup', onKey(false), true);
+  window.trilogyKey = (e, pressed) => key(e, pressed);
+  // Let go of everything if the window loses focus mid-press.
+  window.addEventListener('blur', () => { for (const name of down) manager.simulateInput(0, keyMap[name], 0); down.clear(); });
 
+  document.querySelector('#controls').hidden = false;
   // Point and click and auto-interact start on every time a chapter opens.
   clickMode.checked = true;
   interact.checked = true;
@@ -114,6 +131,7 @@ export function attachControls(emu, code) {
   }
   function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
   function arrive(dir) { stop(); if (interact.checked) press(dir); }
+  // Walked onto open ground: just stop, no button press.
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
   function field() { const s = readField(code, manager.getState()); if (s) startUsed = true; return s; }
   async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
@@ -254,10 +272,15 @@ export function attachControls(emu, code) {
   const DIRS = [[RIGHT],[RIGHT,DOWN],[DOWN],[DOWN,LEFT],[LEFT],[LEFT,UP],[UP],[UP,RIGHT]];
   const heading = (dx, dy) => Math.atan2(dy, dx) / (Math.PI/4);
   const gap = (a, b) => { const d = Math.abs(a-b) % 8; return Math.min(d, 8-d); };
+  // Hold a direction until that axis is lined up, and only start a new one once it's
+  // clearly off, so the hero walks in long straight or diagonal lines, not a zigzag.
   function steer(dx, dy, slack=3) {
     const keys = [];
-    if (dx < -slack) keys.push(LEFT); else if (dx > slack) keys.push(RIGHT);
-    if (dy < -slack) keys.push(UP); else if (dy > slack) keys.push(DOWN);
+    const axis = (d, minus, plus) => {
+      const k = d < 0 ? minus : plus;
+      if (Math.abs(d) > (held.has(k) ? 1 : slack + 3)) keys.push(k);
+    };
+    axis(dx, LEFT, RIGHT); axis(dy, UP, DOWN);
     return keys;
   }
   function face(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? (dx<0?LEFT:RIGHT) : (dy<0?UP:DOWN); }
@@ -298,7 +321,7 @@ export function attachControls(emu, code) {
       return;
     }
     if (dist > 4) order.face = face(dx,dy);
-    if (order.kind === 'walk' && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) { arrive(order.face); return; }
+    if (order.kind === 'walk' && Math.abs(dx) <= 3 && Math.abs(dy) <= 3) { stop(); return; }
 
     // Walk straight at the goal. When blocked, follow the obstacle's edge
     // (always turning the same way) until the way toward the goal opens up.
@@ -319,14 +342,14 @@ export function attachControls(emu, code) {
       return true;
     };
     // Gave up close to the spot: something is probably standing there, so press A on it.
-    const giveUp = () => { if (order.kind === 'walk' && dist <= 28) arrive(face(dx,dy)); else stop(); };
+    const giveUp = () => { if (order.kind === 'walk' && dist <= 20) arrive(face(dx,dy)); else stop(); };
     if (dist < nav.best-1) { nav.best = dist; nav.idle = 0; }
     else if (++nav.idle > 60 && !flip()) { giveUp(); return; }
     nav.stall = moved < 0.4 ? nav.stall+1 : 0;
     if (!nav.follow) {
       if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4)); return; }
       // Bumped into something right where you clicked (a person, chest or sign): use it.
-      if (order.kind === 'walk' && dist <= 28) { arrive(face(dx,dy)); return; }
+      if (order.kind === 'walk' && dist <= 20) { arrive(face(dx,dy)); return; }
       const lean = exact - Math.round(exact);
       if (!nav.flips) nav.side = lean >= 0 ? 1 : -1;
       nav = {...nav, follow:true, stall:0, turns:0, ticks:0, start:dist};
@@ -348,9 +371,25 @@ export function attachControls(emu, code) {
     inputs(DIRS[nav.dir]);
   }
   const timer = setInterval(tick, 50);
+
+  // Keep the game's Text Speed option on its fastest setting. The emulator has no
+  // single-byte write, so patch a save state and load it back, only when needed.
+  const speed = textSpeed[code];
+  let speedWrites = 0;
+  const speedTimer = speed && setInterval(() => {
+    if (busy() || speedWrites >= 6) return;
+    const state = manager.getState();
+    const view = new DataView(state.buffer, state.byteOffset, state.byteLength);
+    if (state.length < 0x61010 || view.getUint32(0) !== 0x52415354 || view.getUint32(8) !== 0x4d454d20 ||
+        view.getUint32(16,true) !== 0x01000007) return;
+    const at = speed.address - 0x03000000 + 0x19010;
+    if (state[at] === speed.fastest) return;
+    state[at] = speed.fastest;
+    speedWrites++;
+    manager.loadState(state);
+  }, 1000);
   function suspend() { stop(); }
-  document.addEventListener('keydown', suspend, true);
   window.addEventListener('blur', suspend);
   document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
-  window.addEventListener('pagehide', () => { clearInterval(timer); suspend(); menu.remove(); }, {once:true});
+  window.addEventListener('pagehide', () => { clearInterval(timer); clearInterval(speedTimer); suspend(); menu.remove(); }, {once:true});
 }

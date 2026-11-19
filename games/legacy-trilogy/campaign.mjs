@@ -141,6 +141,14 @@ pause.onclick=async()=>{
   } catch(error){notice(error);}
   finally{pending=false;}
 };
+// Keys pressed while the page around the game has focus still reach the game.
+for (const [type,pressed] of [['keydown',true],['keyup',false]]) {
+  window.addEventListener(type,e=>{
+    if (frame.hidden || e.target.closest?.('input,select,textarea,button')) return;
+    const forward=frame.contentWindow?.trilogyKey;
+    if (forward && forward(e,pressed)) e.preventDefault();
+  });
+}
 document.addEventListener('visibilitychange',()=>{
   if (document.hidden && manager && !pending) {
     try {write('checkpoint',{chapter:checkpoint.chapter,state:manager.getState()}).catch(notice);}
