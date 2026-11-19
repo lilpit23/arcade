@@ -68,6 +68,10 @@
       location.replace("full-games.html");
       return;
     }
+    if (tab === "larp") {
+      location.replace("larp.html");
+      return;
+    }
     const valid = ["games", "hacks", "projects"].includes(tab) ? tab : "games";
     document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== valid));
     document.querySelectorAll(".tab").forEach((t) =>
