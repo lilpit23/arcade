@@ -67,7 +67,7 @@ export function readField(code, bytes) {
 }
 
 // GBA buttons as RetroPad IDs.
-const A=8, UP=4, DOWN=5, LEFT=6, RIGHT=7;
+const A=8, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7;
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
@@ -80,7 +80,16 @@ export function attachControls(emu, code) {
   const held = new Set();
   // order: {kind, x, y, id?}; marker: where the click landed, drawn as an X.
   let order=null, marker=null, lastHero=null, nav=null, pulse=0;
-  let latest=null;
+  let latest=null, seenField=false;
+
+  // The emulator only reads the keyboard while its game area has focus. Our click
+  // handling cancels the browser's own focus change, so focus it ourselves.
+  const keys = emu.elements.parent;
+  const focusGame = () => { if (document.activeElement !== keys) keys.focus({preventScroll:true}); };
+  focusGame();
+  // Enter works as Start too, alongside the E key.
+  keys.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.repeat) manager.simulateInput(0,3,1); });
+  keys.addEventListener('keyup', e => { if (e.key === 'Enter') manager.simulateInput(0,3,0); });
 
   // Point and click and auto-interact start on every time a chapter opens.
   clickMode.checked = true;
@@ -98,7 +107,7 @@ export function attachControls(emu, code) {
   function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
   function arrive(dir) { stop(); if (interact.checked) press(dir); }
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
-  function field() { return readField(code, manager.getState()); }
+  function field() { const s = readField(code, manager.getState()); if (s) seenField = true; return s; }
   async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
   // Turn toward a direction, then press A: talks, opens, picks up or reads what is there.
   function press(dir) {
@@ -189,13 +198,16 @@ export function attachControls(emu, code) {
   });
   canvas.addEventListener('pointerleave', () => { label.style.display='none'; });
   canvas.addEventListener('pointerdown', event => {
+    focusGame();
     menu.style.display='none';
     if (!clickMode.checked || busy() || event.button !== 0) return;
     const state = field();
     const pt = toGame(event);
     if (!pt) return;
     event.preventDefault();
-    // Not in the field, or a text box is open: a click continues, like the A button.
+    // Title screen and its menu: a click presses Start until you reach the field.
+    // Afterwards, outside the field or with a text box open, a click continues like A.
+    if (!state && !seenField) { stop(); tap(START); return; }
     if (!state || state.talking) { stop(); tap(A); return; }
     give(pick(state, pt));
   });
