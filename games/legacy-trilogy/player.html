@@ -1,5 +1,12 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campaign player</title><style>html,body,#game{height:100%;width:100%;margin:0;background:#101017;color:white}</style></head>
-<body><div id="game"></div><script type="module">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campaign player</title><style>html,body,#game{height:100%;width:100%;margin:0;background:#101017;color:white}
+body{display:flex;flex-direction:column}#game{flex:1;min-height:0}
+#controls{font:14px system-ui;background:#181822;padding:6px 12px;display:flex;gap:1rem;flex-wrap:wrap}
+#controls[hidden]{display:none}#controls label{cursor:pointer;padding:3px}
+body:has(#walk:checked) canvas{cursor:crosshair;touch-action:none}
+</style></head>
+<body><div id="controls" hidden><label><input id="walk" type="checkbox"> Click to walk</label>
+<label><input id="battle" type="checkbox"> Auto-battle nearby enemies</label></div><div id="game"></div><script type="module">
+import {attachControls} from './field-controls.mjs';
 const parentGame = window.parent.trilogySession;
 if (parentGame) {
   const url=URL.createObjectURL(new Blob([parentGame.bytes]));
@@ -7,7 +14,7 @@ if (parentGame) {
     EJS_player:'#game',EJS_core:'mgba',EJS_gameUrl:url,EJS_gameName:'Trilogy-'+parentGame.code,
     EJS_pathtodata:'./engine/',EJS_startOnLoaded:true,EJS_threads:false,EJS_DEBUG_XX:true,
     EJS_disableDatabases:true,EJS_disableAutoLang:true,
-    EJS_onGameStart:()=>parentGame.started(window.EJS_emulator.gameManager),
+    EJS_onGameStart:()=>{parentGame.started(window.EJS_emulator.gameManager); attachControls(window.EJS_emulator,parentGame.code);},
   });
   const loader=document.createElement('script');loader.src='./engine/loader.js';
   loader.onerror=()=>parentGame.failed('The campaign player could not load.');
