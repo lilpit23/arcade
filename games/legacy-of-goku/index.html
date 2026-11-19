@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Legacy • Campaign</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121918;color:#f5ecd7;font:16px 'Barlow',system-ui,sans-serif}main{max-width:900px;margin:5vh auto;padding:20px}header,.bars{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}h1{font-size:clamp(30px,6vw,60px);margin:4px 0 12px;letter-spacing:-.05em}small{font-weight:bold;color:#edb06d;letter-spacing:.14em}canvas{width:100%;image-rendering:pixelated;background:#283a37;border:1px solid #708577}p{line-height:1.55}button{background:#ffd187;color:#182320;border:0;border-radius:4px;padding:12px 22px;font:inherit;font-weight:bold}button:focus-visible{outline:3px solid white}.bars{padding:12px 0;font-variant-numeric:tabular-nums}kbd{color:#ffe0ab}
+</style>
+<main><small id="arc"></small><header><h1 id="place"></h1><strong id="boss"></strong></header><canvas width="400" height="224" aria-label="Campaign combat arena"></canvas><div class="bars"><span id="health"></span><span id="energy"></span><span id="enemy"></span></div>
+<p id="story" aria-live="polite"></p><button id="action">Begin encounter</button>
+<p><kbd>Arrows</kbd> move · double-tap to dash · <kbd>X</kbd> strike · hold and release <kbd>Z</kbd> for ki · <kbd>C</kbd> guard · <kbd>C + Z</kbd> energy shield</p></main>
+<script type="module" src="play.mjs"></script></html>

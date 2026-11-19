@@ -234,5 +234,20 @@
     "license": "MIT",
     "source": "https://github.com/munificent/hauberk",
     "added": "2026-11-18"
+  },
+  {
+    "id": "legacy-of-goku",
+    "title": "Legacy of Goku: Trilogy Campaign",
+    "type": "action",
+    "description": "Fight nine encounters from Raditz to Kid Buu with shared combat controls and automatic checkpoints.",
+    "path": "games/legacy-of-goku/index.html",
+    "glyph": "LOG",
+    "color": "#ed903d",
+    "controls": "Arrow keys to move, double-tap to dash, X to strike, Z to charge ki, C to guard, C + Z for an energy shield.",
+    "tags": [
+      "combat",
+      "campaign"
+    ],
+    "added": "2026-11-19"
   }
 ]
