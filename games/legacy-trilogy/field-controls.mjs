@@ -67,7 +67,7 @@ export function readField(code, bytes) {
 }
 
 // GBA buttons as RetroPad IDs.
-const A=8, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7;
+const A=8, B=0, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7;
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
@@ -80,16 +80,24 @@ export function attachControls(emu, code) {
   const held = new Set();
   // order: {kind, x, y, id?}; marker: where the click landed, drawn as an X.
   let order=null, marker=null, lastHero=null, nav=null, pulse=0;
-  let latest=null, seenField=false;
+  let latest=null, stuck=null, startUsed=false;   // the first click on a title screen presses Start
 
   // The emulator only reads the keyboard while its game area has focus. Our click
   // handling cancels the browser's own focus change, so focus it ourselves.
   const keys = emu.elements.parent;
   const focusGame = () => { if (document.activeElement !== keys) keys.focus({preventScroll:true}); };
   focusGame();
-  // Enter works as Start too, alongside the E key.
-  keys.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.repeat) manager.simulateInput(0,3,1); });
-  keys.addEventListener('keyup', e => { if (e.key === 'Enter') manager.simulateInput(0,3,0); });
+  // Extra keys for keyboards without a numpad, alongside the configured ones.
+  const extra = {Enter:START, ' ':A, j:A, z:A, k:B, x:B};
+  const alias = e => extra[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  keys.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key.toLowerCase() === 'e') startUsed = true;
+    const button = alias(e);
+    if (button === undefined || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    manager.simulateInput(0, button, 1);
+  });
+  keys.addEventListener('keyup', e => { const button = alias(e); if (button !== undefined) manager.simulateInput(0, button, 0); });
 
   // Point and click and auto-interact start on every time a chapter opens.
   clickMode.checked = true;
@@ -107,7 +115,7 @@ export function attachControls(emu, code) {
   function stop() { order=null; marker=null; lastHero=null; nav=null; inputs(); }
   function arrive(dir) { stop(); if (interact.checked) press(dir); }
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
-  function field() { const s = readField(code, manager.getState()); if (s) seenField = true; return s; }
+  function field() { const s = readField(code, manager.getState()); if (s) startUsed = true; return s; }
   async function tap(key) { inputs(); manager.simulateInput(0,key,1); await new Promise(r=>setTimeout(r,70)); manager.simulateInput(0,key,0); }
   // Turn toward a direction, then press A: talks, opens, picks up or reads what is there.
   function press(dir) {
@@ -205,11 +213,15 @@ export function attachControls(emu, code) {
     const pt = toGame(event);
     if (!pt) return;
     event.preventDefault();
-    // Title screen and its menu: a click presses Start until you reach the field.
-    // Afterwards, outside the field or with a text box open, a click continues like A.
-    if (!state && !seenField) { stop(); tap(START); return; }
+    // The very first click gets past "Press Start". After that, outside the field
+    // (menus, story text) or with a text box open, a click presses A.
+    if (!state && !startUsed) { startUsed = true; stop(); tap(START); return; }
     if (!state || state.talking) { stop(); tap(A); return; }
-    give(pick(state, pt));
+    const hit = pick(state, pt);
+    // The last walk click went nowhere: we're on a screen the hero can't move in, so continue.
+    if (hit.kind === 'walk' && stuck && stuck.x === state.hero.x && stuck.y === state.hero.y) { stop(); tap(A); return; }
+    stuck = hit.kind === 'walk' ? {...state.hero} : null;
+    give(hit);
   });
   canvas.addEventListener('contextmenu', event => {
     if (!clickMode.checked || busy()) return;
@@ -292,7 +304,12 @@ export function attachControls(emu, code) {
     // (always turning the same way) until the way toward the goal opens up.
     const moved = lastHero ? Math.hypot(hero.x-lastHero.x, hero.y-lastHero.y) : 1;
     lastHero = hero;
-    nav ||= {follow:false, dir:0, side:1, stall:0, turns:0, ticks:0, best:dist, idle:0, flips:0};
+    nav ||= {follow:false, dir:0, side:1, stall:0, turns:0, ticks:0, best:dist, idle:0, flips:0, from:hero, age:0};
+    // A click that can't move you at all (story text, a menu, a box the game hides
+    // from us) presses A instead, like clicking through text.
+    if (++nav.age === 7 && order.kind === 'walk' && hero.x === nav.from.x && hero.y === nav.from.y) {
+      stop(); tap(A); return;
+    }
     // Going around this way isn't working: follow the edge the other way instead.
     const exact = heading(dx, dy), goal = ((Math.round(exact) % 8) + 8) % 8;
     const flip = () => {
