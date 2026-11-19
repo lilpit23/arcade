@@ -285,5 +285,20 @@
       "reference"
     ],
     "added": "2026-11-18"
+  },
+  {
+    "id": "legacy-of-goku-port",
+    "title": "Legacy of Goku Trilogy Port",
+    "type": "fan games",
+    "description": "Development source and field-map import tools for bringing the first two campaigns into the Buu’s Fury engine. Story integration is in progress.",
+    "link": "https://github.com/lilpit23/arcade/tree/legacy-of-goku-port/tools",
+    "repo": "https://github.com/lilpit23/arcade/tree/legacy-of-goku-port",
+    "glyph": "LoG",
+    "color": "#ed903d",
+    "tags": [
+      "in development",
+      "action RPG"
+    ],
+    "added": "2026-11-19"
   }
 ]
