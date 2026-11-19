@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campaign player</title><style>html,body,#game{height:100%;width:100%;margin:0;background:#101017;color:white}</style></head>
+<body><div id="game"></div><script type="module">
+const parentGame = window.parent.trilogySession;
+if (parentGame) {
+  const url=URL.createObjectURL(new Blob([parentGame.bytes]));
+  Object.assign(window,{
+    EJS_player:'#game',EJS_core:'mgba',EJS_gameUrl:url,EJS_gameName:'Trilogy-'+parentGame.code,
+    EJS_pathtodata:'./engine/',EJS_startOnLoaded:true,EJS_threads:false,EJS_DEBUG_XX:true,
+    EJS_disableDatabases:true,EJS_disableAutoLang:true,
+    EJS_onGameStart:()=>parentGame.started(window.EJS_emulator.gameManager),
+  });
+  const loader=document.createElement('script');loader.src='./engine/loader.js';
+  loader.onerror=()=>parentGame.failed('The campaign player could not load.');
+  document.body.append(loader);
+  addEventListener('pagehide',()=>URL.revokeObjectURL(url));
+}
+</script></body></html>
