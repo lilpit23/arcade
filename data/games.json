@@ -237,9 +237,9 @@
   },
   {
     "id": "legacy-of-goku",
-    "title": "Legacy of Goku: Trilogy Campaign",
+    "title": "Legacy of Goku: Combat Demo",
     "type": "action",
-    "description": "Fight nine encounters from Raditz to Kid Buu with shared combat controls and automatic checkpoints.",
+    "description": "A nine-fight browser prototype inspired by the trilogy, with automatic checkpoints.",
     "path": "games/legacy-of-goku/index.html",
     "glyph": "LOG",
     "color": "#ed903d",
