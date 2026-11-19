@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Legacy of Goku Trilogy | Lilpit Arcade</title><link rel="stylesheet" href="../../css/style.css">
+<style>#chapter-screen{display:block;width:100%;height:min(70vh,640px);border:0;background:#101017}#chapter-screen[hidden]{display:none}#message{min-height:1.5em}</style></head>
+<body><main class="wrap">
+<div class="player-bar"><a class="btn ghost" href="../../full-games.html">← Full Games</a><h1 class="player-title">Legacy of Goku Trilogy</h1></div>
+<section class="panel" id="library"><h2>Campaign</h2><p>Import your three USA cartridges once. Play from the Saiyan invasion through Kid Buu with automatic chapter changes.</p>
+<label class="file-drop">Choose the three .gba files<input id="files" type="file" accept=".gba" multiple></label><ul id="titles"></ul>
+<button class="btn" id="play" disabled>New Game</button></section>
+<p id="message" role="status"></p><iframe hidden title="Campaign player" id="chapter-screen" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
+<button type="button" id="pause" class="btn ghost" hidden>Save and quit</button>
+</main><script type="module" src="campaign.mjs"></script></body></html>
