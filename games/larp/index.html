@@ -20,6 +20,8 @@ h1{font-size:42px;margin:18px 0 4px;color:var(--gold);text-shadow:4px 4px 0 var(
 .rank{display:flex;align-items:center;gap:14px}
 .badge{font-family:'Press Start 2P',monospace;font-size:12px;padding:8px 10px;border:2px solid currentColor}
 .hidden{display:none!important}
+.bot-row{display:flex;flex-wrap:wrap;gap:10px}
+.btn.bot{font-size:11px;padding:12px 14px}
 .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
 .vs .name{font-family:'Press Start 2P',monospace;font-size:12px}
 .vs .score{font-family:'Press Start 2P',monospace;font-size:28px;margin-top:6px}
@@ -75,6 +77,16 @@ input{width:100%;font-family:'VT323',monospace;font-size:28px;padding:10px 12px;
     </div>
     <button class="btn" id="queueBtn">FIND MATCH</button>
     <button class="btn alt" id="resetBtn" style="margin-left:10px">RESET RANK</button>
+    <div class="card" style="margin-top:18px">
+      <div class="px" style="font-size:11px;color:var(--dim)">UNRANKED · VS BOT</div>
+      <div style="color:var(--dim);margin:6px 0 12px">Practice against a bot. No LP on the line.</div>
+      <div class="bot-row">
+        <button class="btn bot" data-bot="easy">EASY</button>
+        <button class="btn bot" data-bot="normal">NORMAL</button>
+        <button class="btn bot" data-bot="hard">HARD</button>
+        <button class="btn bot alt" data-bot="sweat">SWEAT</button>
+      </div>
+    </div>
   </section>
 
   <!-- SEARCHING -->
@@ -223,9 +235,25 @@ function queue(){
   }, 900 + Math.random()*1500);
 }
 
-function startMatch(oppName, oppElo){
+// Unranked bots: skill comes from a fixed rating, LP never changes.
+const BOTS = {
+  easy:   { name:"LarpBot Easy",   elo:720 },
+  normal: { name:"LarpBot Normal", elo:1050 },
+  hard:   { name:"LarpBot Hard",   elo:1350 },
+  sweat:  { name:"LarpBot Sweat",  elo:1650 },
+};
+let lastMode = { ranked:true };
+
+function playBot(key){
+  lastMode = { ranked:false, bot:key };
+  const b = BOTS[key];
+  startMatch(b.name, b.elo, true);
+}
+
+function startMatch(oppName, oppElo, unranked = false){
+  if (!unranked) lastMode = { ranked:true };
   const topics = [...TOPIC_NAMES].sort(() => Math.random()-0.5);
-  M = { oppName, oppElo, topics, round:0, youR:0, oppR:0 };
+  M = { oppName, oppElo, topics, round:0, youR:0, oppR:0, unranked };
   $("oppName").textContent = oppName.toUpperCase(); $("oppHdr").textContent = oppName.toUpperCase();
   show("match");
   startRound();
@@ -315,6 +343,18 @@ function endRound(){
 
 function endMatch(){
   const won = M.youR > M.oppR;
+  if (M.unranked) {
+    $("resTitle").textContent = won ? "YOU OUT-LARPED THE BOT" : "THE BOT OUT-LARPED YOU";
+    $("resTitle").style.color = won ? "var(--you)" : "var(--opp)";
+    $("resScore").textContent = `${M.youR} – ${M.oppR} vs ${M.oppName}`;
+    $("resDelta").textContent = "UNRANKED";
+    $("resDelta").style.color = "var(--dim)";
+    $("resRank").textContent = "No LP change.";
+    $("againBtn").textContent = "REMATCH";
+    show("result");
+    return;
+  }
+  $("againBtn").textContent = "QUEUE AGAIN";
   const exp = 1 / (1 + Math.pow(10, (M.oppElo - profile.elo) / 400));
   const delta = Math.round(40 * ((won?1:0) - exp));
   const before = tierOf(profile.elo);
@@ -333,7 +373,8 @@ function endMatch(){
 }
 
 $("queueBtn").onclick = queue;
-$("againBtn").onclick = queue;
+$("againBtn").onclick = () => lastMode.ranked ? queue() : playBot(lastMode.bot);
+document.querySelectorAll("[data-bot]").forEach(b => b.onclick = () => playBot(b.dataset.bot));
 $("menuBtn").onclick = renderMenu;
 $("resetBtn").onclick = () => { if (confirm("Reset rank to 1000 LP?")) { profile = {elo:1000,w:0,l:0}; store.set(profile); renderMenu(); } };
 renderMenu();
