@@ -22,7 +22,29 @@
   const baseName = (name) => name.replace(/\.[^.]+$/, "");
 
   // Preselected ROM hack (?hack=id)
-  const hackId = new URLSearchParams(location.search).get("hack");
+  const params = new URLSearchParams(location.search);
+  const titles = new Map([
+    ["ALGE", "The Legacy of Goku"],
+    ["ALFE", "The Legacy of Goku II"],
+    ["BG3E", "Buu’s Fury"],
+  ]);
+  const gameCode = params.get("game");
+  const title = titles.get(gameCode);
+  if (title) {
+    document.title = title + " | " + window.SITE.name;
+    $(".player-title").textContent = title;
+    $(".player-bar a").href = "index.html#full-games";
+    $("#after a").href = "index.html#full-games";
+    $("#after a").textContent = "return to Full Games";
+    $("#rom-file").accept = ".gba";
+    $("#system").value = "gba";
+    $("#system").parentElement.hidden = true;
+    $("#patch-drop").closest(".panel").hidden = true;
+    $("#download").hidden = true;
+    $("#setup .meta").textContent = "Select the USA cartridge file for " + title + ".";
+    $("#start").closest(".panel").querySelector(".step-num").textContent = "STEP 2 · PLAY";
+  }
+  const hackId = title ? null : params.get("hack");
   let patchState = hackId ? "loading" : "";
   if (hackId) {
     fetch("data/hacks.json").then((r) => r.json()).then(async (list) => {
@@ -74,10 +96,26 @@
 
   async function readFile(file) { return new Uint8Array(await file.arrayBuffer()); }
 
+  let romSelection = 0;
   wireDrop("#rom-drop", "#rom-file", async (file) => {
-    rom = { name: file.name, bytes: await readFile(file) };
+    const selection = ++romSelection;
+    rom = null;
+    prepare();
+    let bytes;
+    try { bytes = await readFile(file); }
+    catch {
+      if (selection === romSelection) status("Couldn’t read the game file. Choose it again.", "err");
+      return;
+    }
+    if (selection !== romSelection) return;
+    if (title && (bytes.length !== 8388608 || String.fromCharCode(...bytes.subarray(172, 176)) !== gameCode)) {
+      $("#rom-name").textContent = file.name;
+      status("Choose the USA .gba file for " + esc(title) + ".", "err");
+      return;
+    }
+    rom = { name: file.name, bytes };
     $("#rom-name").textContent = `${file.name} (${(file.size / 1048576).toFixed(1)} MB)`;
-    if (!$("#system").value || !hack) {
+    if (!title && (!$("#system").value || !hack)) {
       const core = EXT_CORE[ext(file.name)];
       if (core) $("#system").value = core;
     }
@@ -156,7 +194,7 @@
     const core = $("#system").value || EXT_CORE[ext(rom.name)];
     if (!core) { status("Couldn't detect the system. Pick it from the SYSTEM list.", "err"); return; }
 
-    const gameName = patch ? baseName(patch.name) : baseName(rom.name);
+    const gameName = title || (patch ? baseName(patch.name) : baseName(rom.name));
 
     window.EJS_player = "#game";
     window.EJS_core = core;

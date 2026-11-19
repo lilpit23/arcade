@@ -64,7 +64,7 @@
   // ---------- tabs ----------
   function showTab() {
     const tab = (location.hash || "#games").slice(1);
-    const valid = ["games", "hacks", "projects"].includes(tab) ? tab : "games";
+    const valid = ["games", "full-games", "hacks", "projects"].includes(tab) ? tab : "games";
     document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== valid));
     document.querySelectorAll(".tab").forEach((t) =>
       t.setAttribute("aria-selected", String(t.dataset.tab === valid)));
