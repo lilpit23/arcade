@@ -3,9 +3,10 @@ body{display:flex;flex-direction:column}#game{flex:1;min-height:0}
 #controls{font:14px system-ui;background:#181822;padding:6px 12px;display:flex;gap:1rem;flex-wrap:wrap}
 #controls[hidden]{display:none}#controls label{cursor:pointer;padding:3px}
 body:has(#walk:checked) canvas{cursor:crosshair;touch-action:none}
+#controls .hint{opacity:.6}
 </style></head>
-<body><div id="controls" hidden><label><input id="walk" type="checkbox"> Click to walk</label>
-<label><input id="battle" type="checkbox"> Auto-battle nearby enemies</label></div><div id="game"></div><script type="module">
+<body><div id="controls" hidden><label title="Left-click to walk, attack or talk. Right-click for options."><input id="walk" type="checkbox"> Point and click</label>
+<label title="Fight back when an enemy comes close."><input id="battle" type="checkbox"> Auto-retaliate</label><span class="hint">Left-click: walk / attack / talk · Right-click: options · Click text to continue</span></div><div id="game"></div><script type="module">
 import {attachControls} from './field-controls.mjs';
 import {trilogyControls} from './keyboard.mjs';
 const parentGame = window.parent.trilogySession;
