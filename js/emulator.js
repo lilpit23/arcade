@@ -33,8 +33,8 @@
   if (title) {
     document.title = title + " | " + window.SITE.name;
     $(".player-title").textContent = title;
-    $(".player-bar a").href = "index.html#full-games";
-    $("#after a").href = "index.html#full-games";
+    $(".player-bar a").href = "full-games.html";
+    $("#after a").href = "full-games.html";
     $("#after a").textContent = "return to Full Games";
     $("#rom-file").accept = ".gba";
     $("#system").value = "gba";
