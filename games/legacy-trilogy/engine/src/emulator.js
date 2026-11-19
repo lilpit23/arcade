@@ -3324,13 +3324,16 @@ class EmulatorJS {
     keyChange(e) {
         if (e.repeat) return;
         if (!this.started) return;
+        // Physical numpad controls should also work with Num Lock switched off.
+        const numpad = /^Numpad([0-9])$/.exec(e.code);
+        const keyCode = numpad ? 96 + Number(numpad[1]) : e.keyCode;
         if (this.controlPopup.parentElement.parentElement.getAttribute("hidden") === null) {
             const num = this.controlPopup.getAttribute("button-num");
             const player = this.controlPopup.getAttribute("player-num");
             if (!this.controls[player][num]) {
                 this.controls[player][num] = {};
             }
-            this.controls[player][num].value = e.keyCode;
+            this.controls[player][num].value = keyCode;
             this.controlPopup.parentElement.parentElement.setAttribute("hidden", "");
             this.checkGamepadInputs();
             this.saveSettings();
@@ -3341,7 +3344,7 @@ class EmulatorJS {
         const special = [16, 17, 18, 19, 20, 21, 22, 23];
         for (let i = 0; i < 4; i++) {
             for (let j = 0; j < 30; j++) {
-                if (this.controls[i][j] && this.controls[i][j].value === e.keyCode) {
+                if (this.controls[i][j] && this.controls[i][j].value === keyCode) {
                     this.gameManager.simulateInput(i, j, (e.type === "keyup" ? 0 : (special.includes(j) ? 0x7fff : 1)));
                 }
             }
