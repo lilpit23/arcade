@@ -84,6 +84,8 @@ export function attachControls(emu, code) {
   const retaliate = document.querySelector('#battle');
   const interact = document.querySelector('#interact');
   const held = new Set();
+  // Without a known text-box flag (second game), guess from a click that can't move the hero.
+  const guessText = !layouts[code]?.dialog;
   // order: {kind, x, y, id?}; marker: where the click landed, drawn as an X.
   let order=null, marker=null, lastHero=null, nav=null, pulse=0;
   let latest=null, stuck=null, startUsed=false;   // the first click on a title screen presses Start
@@ -236,9 +238,13 @@ export function attachControls(emu, code) {
     if (!state && !startUsed) { startUsed = true; stop(); tap(START); return; }
     if (!state || state.talking) { stop(); tap(A); return; }
     const hit = pick(state, pt);
-    // The last walk click went nowhere: we're on a screen the hero can't move in, so continue.
-    if (hit.kind === 'walk' && stuck && stuck.x === state.hero.x && stuck.y === state.hero.y) { stop(); tap(A); return; }
-    stuck = hit.kind === 'walk' ? {...state.hero} : null;
+    // The last walk click, just now, went nowhere: probably a screen the hero can't move
+    // in (story text), so this click continues instead. It only covers one click, so a
+    // hero blocked by a wall is never locked out of walking.
+    const now = performance.now();
+    if (guessText && hit.kind === 'walk' && stuck && now - stuck.time < 2000 &&
+        stuck.x === state.hero.x && stuck.y === state.hero.y) { stuck = null; stop(); tap(A); return; }
+    stuck = hit.kind === 'walk' ? {...state.hero, time:now} : null;
     give(hit);
   });
   canvas.addEventListener('contextmenu', event => {
@@ -330,7 +336,7 @@ export function attachControls(emu, code) {
     nav ||= {follow:false, dir:0, side:1, stall:0, turns:0, ticks:0, best:dist, idle:0, flips:0, from:hero, age:0};
     // A click that can't move you at all (story text, a menu, a box the game hides
     // from us) presses A instead, like clicking through text.
-    if (++nav.age === 7 && order.kind === 'walk' && hero.x === nav.from.x && hero.y === nav.from.y) {
+    if (++nav.age === 7 && guessText && order.kind === 'walk' && hero.x === nav.from.x && hero.y === nav.from.y) {
       stop(); tap(A); return;
     }
     // Going around this way isn't working: follow the edge the other way instead.
