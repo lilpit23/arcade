@@ -17,7 +17,7 @@ import tempfile
 import zlib
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 UPSTREAM = Path(__file__).resolve().parents[1] / 'upstream/buus-fury'
 
@@ -31,19 +31,24 @@ def integer_property(name, value):
     return {'name': name, 'type': 'int', 'value': value}
 
 
-def convert(root, public, record, graphic):
-    index = record['index']
-    name = f'log1_{index:02d}'
+def write_field_art(root, public, name, graphic, width, height):
     directory = root / 'maps' / name
-    width, height = record['size_tiles']['w'], record['size_tiles']['h']
     palette = {}
     tiles = {}
     layers = []
+    backdrop = [0, 0, 0]
+    coverage = Image.new("L", (width*8, height*8)) if "composite" in graphic else None
     for layer in sorted(graphic['layers'], key=lambda item: (-item['priority'], -item['bg'])):
         with Image.open(public / layer['png']) as source:
             pixels = source.convert('RGBA')
+        if 'offset_in_composite' in layer:
+            aligned = Image.new('RGBA', (width * 8, height * 8))
+            aligned.paste(pixels, tuple(layer['offset_in_composite']))
+            pixels = aligned
         if pixels.size != (width * 8, height * 8):
             raise ValueError(f'{name}: unexpected layer dimensions')
+        if coverage is not None:
+            coverage = ImageChops.lighter(coverage, pixels.getchannel('A'))
         # Index zero is transparent in the engine. Preserve even opaque black.
         indices = bytearray()
         for r, g, b, a in pixels.getdata():
@@ -66,7 +71,17 @@ def convert(root, public, record, graphic):
                            data=base64.b64encode(zlib.compress(gids)).decode(),
                            properties=[integer_property('bg', bg), integer_property('priority', layer['priority'])]))
     sheet = Image.new('P', (128, max(1, (len(tiles)+15)//16)*8))
-    sheet.putpalette([0, 0, 0] + [v for rgb in palette for v in rgb])
+    composite = public / graphic['composite'] if 'composite' in graphic else None
+    if composite is not None and composite.is_file():
+        with Image.open(composite) as background:
+            holes = ImageChops.invert(coverage.crop((0, 0, *background.size)))
+            bounds = holes.getbbox()
+            if bounds:
+                # A bounding box corner can be occupied. Find an actual uncovered pixel.
+                y = bounds[1]
+                x = holes.crop((0, y, background.width, y+1)).getbbox()[0]
+                backdrop = list(background.convert('RGB').getpixel((x, y)))
+    sheet.putpalette(backdrop + [v for rgb in palette for v in rgb])
     for tile, gid in tiles.items():
         slot = gid - 1
         sheet.paste(Image.frombytes('P', (8, 8), tile), (slot % 16 * 8, slot // 16 * 8))
@@ -80,6 +95,13 @@ def convert(root, public, record, graphic):
                properties=[integer_property('world_w_px', width*8), integer_property('world_h_px', height*8),
                            integer_property('camera_max_x', max(0,width*8-240)),
                            integer_property('camera_max_y', max(0,height*8-160))]))
+
+
+def convert(root, public, record, graphic):
+    index = record['index']
+    name = f'log1_{index:02d}'
+    directory = root / 'maps' / name
+    write_field_art(root, public, name, graphic, record['size_tiles']['w'], record['size_tiles']['h'])
     entrance = record['default_entrance']
     write_json(directory / 'objects.json', dict(map=name, start_pos=[entrance['x'], entrance['y']],
                                                 map_triggers=[], props=[], areas=[]))
