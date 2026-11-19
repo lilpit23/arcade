@@ -249,5 +249,22 @@
       "campaign"
     ],
     "added": "2026-11-19"
+  },
+  {
+    "id": "larp",
+    "title": "Larp",
+    "type": "party",
+    "description": "Ranked 1v1 trivia: get a random topic and name more answers than your opponent before the clock runs out.",
+    "path": "games/larp/index.html",
+    "glyph": "LARP",
+    "color": "#ffd23f",
+    "controls": "Type answers, press Enter",
+    "tags": [
+      "ranked",
+      "1v1",
+      "trivia",
+      "demo"
+    ],
+    "added": "2026-11-19"
   }
 ]

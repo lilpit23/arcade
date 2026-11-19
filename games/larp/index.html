@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Larp</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+:root{--bg:#0d0b1a;--panel:#1a1630;--line:#3a3160;--ink:#f3eefe;--dim:#9c93c4;--you:#2ee6a6;--opp:#ff4f8b;--gold:#ffd23f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'VT323',monospace;font-size:22px;min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:760px;padding:16px}
+h1,h2,.px{font-family:'Press Start 2P',monospace}
+h1{font-size:42px;margin:18px 0 4px;color:var(--gold);text-shadow:4px 4px 0 var(--opp);letter-spacing:2px}
+.sub{color:var(--dim);margin:0 0 20px}
+.card{background:var(--panel);border:3px solid var(--line);padding:16px;margin-bottom:14px}
+.btn{font-family:'Press Start 2P',monospace;font-size:14px;background:var(--you);color:#0d0b1a;border:0;padding:14px 20px;cursor:pointer;box-shadow:4px 4px 0 #0a7d58}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #0a7d58}
+.btn.alt{background:var(--opp);box-shadow:4px 4px 0 #8d1f45}
+.rank{display:flex;align-items:center;gap:14px}
+.badge{font-family:'Press Start 2P',monospace;font-size:12px;padding:8px 10px;border:2px solid currentColor}
+.hidden{display:none!important}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+.vs .name{font-family:'Press Start 2P',monospace;font-size:12px}
+.vs .score{font-family:'Press Start 2P',monospace;font-size:28px;margin-top:6px}
+.you{color:var(--you)}.opp{color:var(--opp)}
+.topic{font-family:'Press Start 2P',monospace;font-size:16px;line-height:1.5;text-align:center;color:var(--gold);margin:6px 0}
+.timer{height:10px;background:#2a2448;margin:10px 0}
+.timer>div{height:100%;background:var(--gold);transition:width .1s linear}
+input{width:100%;font-family:'VT323',monospace;font-size:28px;padding:10px 12px;background:#0d0b1a;color:var(--ink);border:3px solid var(--you);outline:none}
+.feed{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.feed ul{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto}
+.feed li{padding:2px 0;animation:pop .25s}
+.feed h3{font-family:'Press Start 2P',monospace;font-size:10px;margin:0 0 6px}
+.pts{color:var(--gold)}
+.flash{min-height:28px;text-align:center;margin-top:8px}
+.meter{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.meter span{width:14px;height:14px;background:#2a2448}
+.meter span.on{background:var(--gold)}
+@keyframes pop{from{transform:scale(1.3);opacity:0}to{transform:none;opacity:1}}
+.searching{text-align:center;padding:40px 0}
+.dots::after{content:'';animation:dots 1s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.result{text-align:center}
+.result h2{font-size:26px;margin:10px 0}
+.delta{font-family:'Press Start 2P',monospace;font-size:18px}
+.rules{color:var(--dim);margin:0;padding-left:20px}
+.missed{color:var(--dim);font-size:19px}
+@media(max-width:520px){h1{font-size:30px}.vs .score{font-size:20px}.topic{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>LARP</h1>
+  <p class="sub">Ranked 1v1. One topic. Name more stuff than the other guy. Larp harder.</p>
+
+  <!-- MENU -->
+  <section id="menu">
+    <div class="card rank">
+      <div>
+        <div class="px" style="font-size:11px;color:var(--dim)">YOUR RANK</div>
+        <div id="rankName" class="px" style="font-size:18px;margin-top:8px"></div>
+        <div id="rankElo" style="color:var(--dim)"></div>
+      </div>
+      <div style="margin-left:auto;text-align:right;color:var(--dim)" id="record"></div>
+    </div>
+    <div class="card">
+      <ul class="rules">
+        <li>Best of 3 rounds, 30 seconds each, random topic.</li>
+        <li>Type answers + Enter. Real answers only.</li>
+        <li>Shared board: if your opponent says it first, it's <b>taken</b>.</li>
+        <li>Deep cuts are worth 2 pts. Chain fast answers for combo.</li>
+        <li>Win to climb from NPC to Main Character.</li>
+      </ul>
+    </div>
+    <button class="btn" id="queueBtn">FIND MATCH</button>
+    <button class="btn alt" id="resetBtn" style="margin-left:10px">RESET RANK</button>
+  </section>
+
+  <!-- SEARCHING -->
+  <section id="search" class="hidden">
+    <div class="card searching">
+      <div class="px" style="font-size:14px">SEARCHING FOR OPPONENT<span class="dots"></span></div>
+      <div style="color:var(--dim);margin-top:12px" id="searchInfo"></div>
+    </div>
+  </section>
+
+  <!-- MATCH -->
+  <section id="match" class="hidden">
+    <div class="card vs">
+      <div><div class="name you" id="youName">YOU</div><div class="score you" id="youScore">0</div><div class="meter" id="youRounds"></div></div>
+      <div class="px" style="font-size:12px;color:var(--dim)" id="roundLbl">R1</div>
+      <div><div class="name opp" id="oppName">BOT</div><div class="score opp" id="oppScore">0</div><div class="meter" id="oppRounds"></div></div>
+    </div>
+    <div class="card">
+      <div class="px" style="font-size:10px;color:var(--dim);text-align:center">NAME AS MANY AS YOU CAN</div>
+      <div class="topic" id="topic"></div>
+      <div class="timer"><div id="bar"></div></div>
+      <input id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type and press Enter">
+      <div class="flash" id="flash"></div>
+      <div class="feed">
+        <div><h3 class="you">YOU</h3><ul id="youList"></ul></div>
+        <div><h3 class="opp" id="oppHdr">OPP</h3><ul id="oppList"></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="hidden">
+    <div class="card result">
+      <h2 id="resTitle"></h2>
+      <div id="resScore" style="color:var(--dim)"></div>
+      <div class="delta" id="resDelta" style="margin:16px 0"></div>
+      <div id="resRank"></div>
+    </div>
+    <button class="btn" id="againBtn">QUEUE AGAIN</button>
+    <button class="btn alt" id="menuBtn" style="margin-left:10px">MENU</button>
+  </section>
+</div>
+
+<script>
+// ---------- TOPICS ----------
+// Each answer: "canonical|alias|alias". Second half of each list = deep cuts (2 pts).
+const TOPICS = {
+  "Countries in Europe": "france|germany|italy|spain|portugal|uk|united kingdom|england|ireland|netherlands|holland|belgium|switzerland|austria|poland|sweden|norway|denmark|finland|greece|ukraine|russia|czech republic|czechia|hungary|romania|croatia|serbia|bulgaria|iceland|slovakia|slovenia|estonia|latvia|lithuania|belarus|moldova|albania|montenegro|north macedonia|macedonia|bosnia|bosnia and herzegovina|kosovo|luxembourg|liechtenstein|monaco|andorra|san marino|vatican|vatican city|malta|cyprus",
+  "Pokemon": "pikachu|charizard|bulbasaur|squirtle|charmander|mewtwo|mew|eevee|snorlax|gengar|jigglypuff|psyduck|magikarp|gyarados|lucario|greninja|dragonite|onix|meowth|togepi|vaporeon|jolteon|flareon|umbreon|espeon|sylveon|blastoise|venusaur|ivysaur|wartortle|charmeleon|raichu|machamp|alakazam|abra|kadabra|geodude|golem|lapras|ditto|arcanine|growlithe|ninetales|vulpix|rayquaza|groudon|kyogre|garchomp|blaziken|sceptile|swampert|metagross|tyranitar|scizor|scyther|lugia|ho-oh|hooh|celebi|jirachi|deoxys|arceus|darkrai|zekrom|reshiram|kyurem|mimikyu|wooper|slowpoke|cubone|marowak|porygon|chansey|blissey|wobbuffet|sableye|spheal|bidoof|klefki|dunsparce",
+  "NBA Players (any era)": "lebron james|lebron|michael jordan|jordan|kobe bryant|kobe|stephen curry|steph curry|curry|kevin durant|durant|shaquille o'neal|shaq|magic johnson|larry bird|tim duncan|kareem abdul-jabbar|kareem|giannis antetokounmpo|giannis|nikola jokic|jokic|luka doncic|luka|james harden|harden|russell westbrook|westbrook|kawhi leonard|kawhi|anthony davis|dwyane wade|wade|dirk nowitzki|dirk|allen iverson|iverson|chris paul|kyrie irving|kyrie|jayson tatum|tatum|joel embiid|embiid|victor wembanyama|wemby|ja morant|damian lillard|dame|anthony edwards|ant|devin booker|booker|jimmy butler|paul george|klay thompson|draymond green|draymond|kevin garnett|kg|paul pierce|ray allen|hakeem olajuwon|hakeem|patrick ewing|charles barkley|barkley|scottie pippen|pippen|dennis rodman|rodman|bill russell|wilt chamberlain|wilt|karl malone|john stockton|stockton|vince carter|tracy mcgrady|t-mac|steve nash|nash|yao ming|derrick rose|carmelo anthony|melo|manu ginobili|tony parker|pau gasol|blake griffin|kevin love|rajon rondo|alperen sengun|tyrese haliburton|shai gilgeous-alexander|sga|zion williamson|zion|trae young|donovan mitchell|jalen brunson|brunson|lamelo ball|lonzo ball|muggsy bogues|spud webb|manute bol|steve kerr|robert horry|dikembe mutombo|mutombo|alonzo mourning|reggie miller|gary payton|penny hardaway",
+  "Fast Food Chains": "mcdonalds|mcdonald's|burger king|wendys|wendy's|kfc|taco bell|subway|chick-fil-a|chick fil a|popeyes|chipotle|five guys|in-n-out|in n out|domino's|dominos|pizza hut|papa johns|papa john's|little caesars|sonic|arbys|arby's|dairy queen|jack in the box|carls jr|carl's jr|hardees|hardee's|white castle|wingstop|panda express|panera|panera bread|shake shack|whataburger|culvers|culver's|raising canes|raising cane's|canes|jersey mikes|jersey mike's|jimmy johns|jimmy john's|del taco|qdoba|zaxbys|zaxby's|bojangles|el pollo loco|church's chicken|krystal|checkers|rallys|steak n shake|long john silvers|a&w|nandos|nando's|greggs|tim hortons|dunkin|starbucks|firehouse subs|potbelly|moes|moe's|wienerschnitzel|cook out|cookout|portillos|portillo's|freddys|freddy's|smashburger|habit burger|the habit|fatburger|wahoo's|baja fresh|captain d's|golden chick",
+  "Things you find in a kitchen": "fridge|refrigerator|oven|stove|microwave|toaster|sink|knife|fork|spoon|plate|bowl|cup|mug|pan|pot|spatula|whisk|blender|kettle|dishwasher|cutting board|colander|ladle|tongs|freezer|cabinet|counter|countertop|sponge|dish soap|napkins|paper towels|oven mitt|apron|grater|peeler|rolling pin|measuring cup|measuring spoons|can opener|bottle opener|corkscrew|trash can|garbage can|salt|pepper|spice rack|coffee maker|air fryer|rice cooker|slow cooker|crock pot|instant pot|food processor|mixer|stand mixer|mortar and pestle|zester|mandoline|baking sheet|muffin tin|cast iron|wok|dutch oven|strainer|sieve|thermometer|timer|trivet|tupperware|aluminum foil|plastic wrap|cling film|ziploc|bread box|lazy susan|pizza cutter|garlic press|salad spinner|egg timer|butter dish|range hood|backsplash",
+  "Video Game Franchises": "mario|super mario|zelda|legend of zelda|pokemon|call of duty|cod|minecraft|fortnite|halo|grand theft auto|gta|fifa|ea fc|madden|2k|nba 2k|sonic|metroid|kirby|donkey kong|street fighter|mortal kombat|tekken|final fantasy|kingdom hearts|resident evil|silent hill|metal gear|assassin's creed|assassins creed|far cry|battlefield|apex legends|overwatch|league of legends|valorant|counter-strike|cs|dota|the sims|sims|animal crossing|splatoon|smash bros|super smash bros|tetris|pac-man|pacman|god of war|uncharted|the last of us|spider-man|spiderman|elden ring|dark souls|fallout|elder scrolls|skyrim|doom|portal|half-life|bioshock|borderlands|destiny|gears of war|red dead|red dead redemption|persona|dragon quest|fire emblem|xenoblade|star fox|f-zero|pikmin|earthbound|mother|castlevania|mega man|megaman|contra|bomberman|crash bandicoot|spyro|ratchet and clank|jak and daxter|sly cooper|hitman|tomb raider|devil may cry|bayonetta|yakuza|like a dragon|monster hunter|ace attorney|katamari|banjo-kazooie|banjo kazooie|rayman|prince of persia|splinter cell|rainbow six|saints row|burnout|need for speed|gran turismo|forza|wipeout|kingdom come|stardew valley|terraria|hollow knight|undertale",
+  "Dog Breeds": "labrador|lab|golden retriever|german shepherd|bulldog|poodle|beagle|rottweiler|husky|siberian husky|dachshund|chihuahua|pug|boxer|corgi|shih tzu|pomeranian|great dane|doberman|border collie|french bulldog|frenchie|yorkie|yorkshire terrier|maltese|pitbull|pit bull|chow chow|shiba inu|shiba|australian shepherd|aussie|cocker spaniel|bernese mountain dog|saint bernard|st bernard|mastiff|greyhound|whippet|dalmatian|akita|malamute|alaskan malamute|samoyed|bichon frise|bichon|basset hound|bloodhound|cavalier king charles|havanese|newfoundland|papillon|schnauzer|weimaraner|vizsla|rhodesian ridgeback|shar pei|basenji|borzoi|afghan hound|irish wolfhound|bull terrier|jack russell|jack russell terrier|cane corso|great pyrenees|keeshond|leonberger|lhasa apso|pekingese|puli|komondor|xoloitzcuintli|xolo|saluki|chinese crested|norwegian elkhound|portuguese water dog|bedlington terrier|dogo argentino|belgian malinois|malinois|kelpie|catahoula",
+  "Planets, moons & space stuff": "earth|mars|venus|mercury|jupiter|saturn|uranus|neptune|pluto|sun|moon|asteroid|comet|meteor|black hole|galaxy|milky way|star|nebula|supernova|andromeda|io|europa|ganymede|callisto|titan|enceladus|phobos|deimos|triton|charon|ceres|eris|makemake|haumea|quasar|pulsar|neutron star|white dwarf|red giant|kuiper belt|oort cloud|asteroid belt|exoplanet|proxima centauri|alpha centauri|betelgeuse|sirius|polaris|vega|rigel|orion|big dipper|ursa major|halley's comet|halleys comet|dark matter|dark energy|wormhole|event horizon|magnetar|brown dwarf|sagittarius a*|sagittarius a|oberon|miranda|titania|mimas|iapetus|rhea|dione|hyperion|sedna|arrokoth",
+  "Brainrot / Internet slang": "rizz|skibidi|gyatt|sigma|ohio|fanum tax|mewing|bussin|no cap|cap|bet|sus|slay|delulu|aura|aura farming|npc|main character|mog|mogging|looksmaxxing|goat|based|cringe|ratio|w|l|fr|ong|on god|lowkey|highkey|bruh|yeet|vibe|vibe check|ate|mid|bffr|its giving|it's giving|ick|simp|stan|glaze|glazing|cooked|we're cooked|crash out|tweaking|opps|alpha|beta|edging|chat|unc|chopped|six seven|67|sybau|gooning|brainrot|touch grass|let him cook|caught in 4k|pookie|skill issue|copium|hopium|ragebait|yap|yapping|larp|larping|grindset|zesty|oomf|irl|tbh|ong fr|griddy|blud|mandem|ts|pmo|icl|tuff|dawg|big back|zaza",
+  "Marvel Characters": "iron man|tony stark|spider-man|spiderman|peter parker|captain america|steve rogers|thor|hulk|bruce banner|black widow|natasha|hawkeye|thanos|loki|black panther|t'challa|doctor strange|scarlet witch|wanda|vision|ant-man|ant man|wasp|captain marvel|carol danvers|groot|rocket|star-lord|starlord|gamora|drax|nebula|deadpool|wolverine|logan|magneto|professor x|charles xavier|storm|cyclops|jean grey|rogue|gambit|beast|venom|green goblin|doctor octopus|doc ock|ultron|nick fury|falcon|winter soldier|bucky|daredevil|punisher|moon knight|ms marvel|kamala khan|shang-chi|she-hulk|silver surfer|galactus|mephisto|kang|red skull|mysterio|electro|vulture|sandman|kraven|rhino|lizard|morbius|carnage|blade|ghost rider|namor|ironheart|squirrel girl|howard the duck|beta ray bill|adam warlock|the watcher|uatu|nightcrawler|colossus|psylocke|cable|domino|juggernaut|mister sinister|apocalypse|sentry|yondu|kraglin|mantis|korg|valkyrie|hela|surtur",
+  "Car Brands": "toyota|honda|ford|chevrolet|chevy|bmw|mercedes|mercedes-benz|audi|tesla|nissan|hyundai|kia|volkswagen|vw|subaru|mazda|lexus|jeep|dodge|ram|gmc|cadillac|buick|lincoln|chrysler|porsche|ferrari|lamborghini|maserati|bentley|rolls-royce|rolls royce|aston martin|mclaren|bugatti|jaguar|land rover|range rover|volvo|mini|fiat|alfa romeo|peugeot|renault|citroen|skoda|seat|genesis|acura|infiniti|mitsubishi|suzuki|polestar|rivian|lucid|koenigsegg|pagani|lotus|byd|nio|geely|lada|dacia|opel|vauxhall|saab|pontiac|oldsmobile|plymouth|saturn|hummer|scion|mercury|delorean|tata|mahindra|proton|holden|cupra|smart|rimac",
+  "Things that are yellow": "banana|sun|lemon|corn|cheese|school bus|taxi|bee|duckling|rubber duck|pikachu|spongebob|minion|minions|the simpsons|simpsons|homer simpson|butter|mustard|egg yolk|yolk|sunflower|dandelion|canary|pineapple|gold|highlighter|post-it|post it note|caution tape|smiley face|emoji|tennis ball|pencil|banana split|lemonade|chick|daffodil|traffic light|big bird|tweety|pac-man|pacman|mac and cheese|popcorn|corn dog|starburst|peeps|squash|yellow pepper|bell pepper|sulfur|goldfinch|bumblebee|hard hat|raincoat|caution sign|mango|grapefruit|cornbread|custard|turmeric|saffron|quince|canola|buttercup|marigold|forsythia|goldenrod|yellowjacket|yellow jacket|lab|golden retriever|hufflepuff|yellow card|livestrong|ikea|shell|dhl|mcdonalds arches|nascar",
+};
+const TOPIC_NAMES = Object.keys(TOPICS);
+
+const norm = s => s.toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9*]/g,"");
+
+// Build each topic into a lookup: key -> group id. Aliases share a group.
+// Groups are formed by treating consecutive entries listed right after one another as separate,
+// so we use a hand-built alias map instead: any entry in ALIAS joins its canonical.
+const ALIAS = {
+  "united kingdom":"uk","england":"uk","holland":"netherlands","czechia":"czech republic","macedonia":"north macedonia","bosnia and herzegovina":"bosnia","vatican city":"vatican",
+  "hooh":"ho-oh",
+  "lebron":"lebron james","jordan":"michael jordan","kobe":"kobe bryant","steph curry":"stephen curry","curry":"stephen curry","durant":"kevin durant","shaq":"shaquille o'neal","kareem":"kareem abdul-jabbar","giannis":"giannis antetokounmpo","jokic":"nikola jokic","luka":"luka doncic","harden":"james harden","westbrook":"russell westbrook","kawhi":"kawhi leonard","wade":"dwyane wade","dirk":"dirk nowitzki","iverson":"allen iverson","kyrie":"kyrie irving","tatum":"jayson tatum","embiid":"joel embiid","wemby":"victor wembanyama","dame":"damian lillard","ant":"anthony edwards","booker":"devin booker","draymond":"draymond green","kg":"kevin garnett","hakeem":"hakeem olajuwon","barkley":"charles barkley","pippen":"scottie pippen","rodman":"dennis rodman","wilt":"wilt chamberlain","stockton":"john stockton","t-mac":"tracy mcgrady","nash":"steve nash","melo":"carmelo anthony","sga":"shai gilgeous-alexander","zion":"zion williamson","brunson":"jalen brunson","mutombo":"dikembe mutombo",
+  "mcdonald's":"mcdonalds","wendy's":"wendys","chick fil a":"chick-fil-a","in n out":"in-n-out","dominos":"domino's","papa john's":"papa johns","arby's":"arbys","carl's jr":"carls jr","hardee's":"hardees","panera bread":"panera","culver's":"culvers","raising cane's":"raising canes","canes":"raising canes","jersey mike's":"jersey mikes","jimmy john's":"jimmy johns","zaxby's":"zaxbys","nando's":"nandos","moe's":"moes","cookout":"cook out","portillo's":"portillos","freddy's":"freddys","the habit":"habit burger",
+  "refrigerator":"fridge","countertop":"counter","garbage can":"trash can","crock pot":"slow cooker","cling film":"plastic wrap","sieve":"strainer",
+  "super mario":"mario","legend of zelda":"zelda","cod":"call of duty","gta":"grand theft auto","ea fc":"fifa","nba 2k":"2k","assassins creed":"assassin's creed","cs":"counter-strike","sims":"the sims","super smash bros":"smash bros","pacman":"pac-man","spiderman":"spider-man","red dead redemption":"red dead","skyrim":"elder scrolls","mother":"earthbound","megaman":"mega man","like a dragon":"yakuza","banjo kazooie":"banjo-kazooie",
+  "lab":"labrador","siberian husky":"husky","frenchie":"french bulldog","yorkshire terrier":"yorkie","pit bull":"pitbull","shiba":"shiba inu","aussie":"australian shepherd","st bernard":"saint bernard","alaskan malamute":"malamute","bichon":"bichon frise","jack russell terrier":"jack russell","xolo":"xoloitzcuintli","malinois":"belgian malinois",
+  "halleys comet":"halley's comet","sagittarius a":"sagittarius a*","ursa major":"big dipper",
+  "cap":"no cap","aura farming":"aura","mogging":"mog","we're cooked":"cooked","on god":"ong","ong fr":"ong","it's giving":"its giving","glazing":"glaze","yapping":"yap","larping":"larp","67":"six seven",
+  "tony stark":"iron man","spiderman":"spider-man","peter parker":"spider-man","steve rogers":"captain america","bruce banner":"hulk","natasha":"black widow","t'challa":"black panther","wanda":"scarlet witch","ant man":"ant-man","carol danvers":"captain marvel","starlord":"star-lord","logan":"wolverine","charles xavier":"professor x","doc ock":"doctor octopus","bucky":"winter soldier","kamala khan":"ms marvel","uatu":"the watcher",
+  "chevy":"chevrolet","mercedes-benz":"mercedes","vw":"volkswagen","rolls royce":"rolls-royce",
+  "post it note":"post-it","rubber duck":"duckling","minions":"minion","simpsons":"the simpsons","yolk":"egg yolk","yellow jacket":"yellowjacket","bell pepper":"yellow pepper",
+};
+
+function buildTopic(name){
+  const raw = TOPICS[name].split("|");
+  const canon = [...new Set(raw.map(r => ALIAS[r] || r))];
+  const half = Math.floor(canon.length * 0.5);
+  const groups = canon.map((c,i) => ({ label:c, pts: i >= half ? 2 : 1, idx:i }));
+  const byLabel = Object.fromEntries(groups.map(g => [g.label, g]));
+  const lookup = {};
+  raw.forEach(r => { lookup[norm(r)] = byLabel[ALIAS[r] || r]; });
+  return { name, groups, lookup };
+}
+
+// fuzzy: allow 1 typo for words >= 6 chars
+function lev(a,b){ if(Math.abs(a.length-b.length)>1) return 9; const d=[...Array(b.length+1).keys()];
+  for(let i=1;i<=a.length;i++){ let p=d[0]; d[0]=i; for(let j=1;j<=b.length;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1)); p=t; } } return d[b.length]; }
+function match(topic, text){
+  const n = norm(text); if(!n) return null;
+  if(topic.lookup[n]) return topic.lookup[n];
+  if(n.length >= 6) for(const k in topic.lookup) if(lev(n,k) <= 1) return topic.lookup[k];
+  return null;
+}
+
+// ---------- RANK ----------
+const TIERS = [
+  {min:0,    name:"NPC",            color:"#8a8a8a"},
+  {min:900,  name:"POSER",          color:"#c58b4b"},
+  {min:1050, name:"LARPER",         color:"#2ee6a6"},
+  {min:1200, name:"METHOD ACTOR",   color:"#4fb3ff"},
+  {min:1350, name:"DELULU",         color:"#c86bff"},
+  {min:1500, name:"MAIN CHARACTER", color:"#ffd23f"},
+];
+const tierOf = e => [...TIERS].reverse().find(t => e >= t.min);
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem("larp.profile")) || {elo:1000,w:0,l:0}; } catch { return {elo:1000,w:0,l:0}; } },
+  set(p){ try { localStorage.setItem("larp.profile", JSON.stringify(p)); } catch {} },
+};
+let profile = store.get();
+
+const BOT_NAMES = ["xX_Larpmaster_Xx","sigmaGrindset","npc_4417","DeluluDan","mewingMike","touchgrassplz","AuraFarmer","rizzlord","unc_status","chopped_chad","ohio_final_boss","yapQueen","certified_glazer","copium_dealer","skillissue99"];
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+const show = id => ["menu","search","match","result"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+
+function renderMenu(){
+  const t = tierOf(profile.elo);
+  $("rankName").textContent = t.name; $("rankName").style.color = t.color;
+  $("rankElo").textContent = profile.elo + " LP";
+  $("record").innerHTML = `${profile.w}W / ${profile.l}L`;
+  show("menu");
+}
+
+// ---------- MATCH ----------
+const ROUND_TIME = 30, ROUNDS_TO_WIN = 2;
+let M = null;
+
+function queue(){
+  show("search");
+  const oppElo = Math.max(700, profile.elo + Math.round((Math.random()-0.5)*160));
+  const name = BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)];
+  $("searchInfo").textContent = "Range: " + (profile.elo-100) + "–" + (profile.elo+100) + " LP";
+  setTimeout(() => {
+    $("searchInfo").innerHTML = `Found <b class="opp">${name}</b> · ${tierOf(oppElo).name} · ${oppElo} LP`;
+    setTimeout(() => startMatch(name, oppElo), 1200);
+  }, 900 + Math.random()*1500);
+}
+
+function startMatch(oppName, oppElo){
+  const topics = [...TOPIC_NAMES].sort(() => Math.random()-0.5);
+  M = { oppName, oppElo, topics, round:0, youR:0, oppR:0 };
+  $("oppName").textContent = oppName.toUpperCase(); $("oppHdr").textContent = oppName.toUpperCase();
+  show("match");
+  startRound();
+}
+
+function meter(el, n){ el.innerHTML = Array.from({length:ROUNDS_TO_WIN},(_,i)=>`<span class="${i<n?"on":""}"></span>`).join(""); }
+
+function startRound(){
+  const topic = buildTopic(M.topics[M.round]);
+  const R = M.R = { topic, taken:new Map(), you:0, opp:0, t:ROUND_TIME, combo:0, lastHit:0, over:false };
+  $("roundLbl").textContent = "R" + (M.round+1);
+  $("topic").textContent = topic.name;
+  $("youScore").textContent = 0; $("oppScore").textContent = 0;
+  $("youList").innerHTML = ""; $("oppList").innerHTML = ""; $("flash").textContent = "";
+  meter($("youRounds"), M.youR); meter($("oppRounds"), M.oppR);
+  const inp = $("answer"); inp.value = ""; inp.disabled = false; inp.focus();
+
+  // Bot skill: higher elo => faster + knows more deep cuts
+  const skill = Math.min(1, Math.max(0.15, (M.oppElo - 700) / 900));
+  const pool = topic.groups.filter(g => Math.random() < (g.pts === 1 ? 0.5 + skill*0.4 : 0.1 + skill*0.5)).sort(() => Math.random()-0.5);
+  const interval = 3200 - skill*2000; // ms between bot answers
+  let bi = 0;
+  const botTick = () => {
+    if (R.over) return;
+    while (bi < pool.length && R.taken.has(pool[bi].label)) bi++;
+    if (bi < pool.length) claim("opp", pool[bi++]);
+    R.botTimer = setTimeout(botTick, interval * (0.5 + Math.random()));
+  };
+  R.botTimer = setTimeout(botTick, 1200 + Math.random()*1200);
+
+  const start = performance.now();
+  R.clock = setInterval(() => {
+    const left = ROUND_TIME - (performance.now()-start)/1000;
+    $("bar").style.width = Math.max(0, left/ROUND_TIME*100) + "%";
+    if (left <= 0) endRound();
+  }, 100);
+}
+
+function claim(who, g){
+  const R = M.R;
+  let pts = g.pts;
+  if (who === "you") {
+    const now = performance.now();
+    R.combo = now - R.lastHit < 3000 ? R.combo + 1 : 1;
+    R.lastHit = now;
+    if (R.combo >= 3) pts += 1;
+  }
+  R.taken.set(g.label, who);
+  R[who] += pts;
+  $(who+"Score").textContent = R[who];
+  const li = document.createElement("li");
+  li.innerHTML = `${g.label} <span class="pts">+${pts}${g.pts===2?" ★":""}</span>`;
+  $(who+"List").prepend(li);
+  return pts;
+}
+
+function flash(msg, color){ const f=$("flash"); f.textContent=msg; f.style.color=color; }
+
+$("answer").addEventListener("keydown", e => {
+  if (e.key !== "Enter" || !M || M.R.over) return;
+  const v = e.target.value.trim(); e.target.value = "";
+  if (!v) return;
+  const g = match(M.R.topic, v);
+  if (!g) return flash(`"${v}" — not it. stop capping.`, "var(--opp)");
+  const owner = M.R.taken.get(g.label);
+  if (owner === "you") return flash("you already said that lol", "var(--dim)");
+  if (owner === "opp") return flash(`TAKEN by ${M.oppName}`, "var(--opp)");
+  const pts = claim("you", g);
+  const c = M.R.combo;
+  flash(g.pts===2 ? "DEEP CUT ★ " + (c>=3?`COMBO x${c}`:"") : (c>=3 ? `COMBO x${c} +1` : "nice"), g.pts===2?"var(--gold)":"var(--you)");
+});
+
+function endRound(){
+  const R = M.R; if (R.over) return;
+  R.over = true; clearInterval(R.clock); clearTimeout(R.botTimer);
+  $("answer").disabled = true;
+  let msg;
+  if (R.you > R.opp){ M.youR++; msg = "ROUND WON"; }
+  else if (R.opp > R.you){ M.oppR++; msg = "ROUND LOST"; }
+  else msg = "DRAW — replay";
+  meter($("youRounds"), M.youR); meter($("oppRounds"), M.oppR);
+  const missed = R.topic.groups.filter(g => !R.taken.has(g.label)).sort(()=>Math.random()-0.5).slice(0,6).map(g=>g.label);
+  $("flash").innerHTML = `<b style="color:${R.you>R.opp?"var(--you)":R.opp>R.you?"var(--opp)":"var(--gold)"}">${msg}</b><div class="missed">nobody said: ${missed.join(", ")}</div>`;
+  M.round = (M.round + 1) % M.topics.length;
+  setTimeout(() => (M.youR >= ROUNDS_TO_WIN || M.oppR >= ROUNDS_TO_WIN) ? endMatch() : startRound(), 3200);
+}
+
+function endMatch(){
+  const won = M.youR > M.oppR;
+  const exp = 1 / (1 + Math.pow(10, (M.oppElo - profile.elo) / 400));
+  const delta = Math.round(40 * ((won?1:0) - exp));
+  const before = tierOf(profile.elo);
+  profile.elo = Math.max(0, profile.elo + delta);
+  won ? profile.w++ : profile.l++;
+  store.set(profile);
+  const after = tierOf(profile.elo);
+  $("resTitle").textContent = won ? "YOU OUT-LARPED THEM" : "YOU GOT OUT-LARPED";
+  $("resTitle").style.color = won ? "var(--you)" : "var(--opp)";
+  $("resScore").textContent = `${M.youR} – ${M.oppR} vs ${M.oppName}`;
+  $("resDelta").textContent = (delta>=0?"+":"") + delta + " LP";
+  $("resDelta").style.color = delta>=0 ? "var(--you)" : "var(--opp)";
+  const change = after.name !== before.name ? (profile.elo > 0 && after.min > before.min ? " ▲ PROMOTED" : " ▼ DEMOTED") : "";
+  $("resRank").innerHTML = `<span class="badge" style="color:${after.color}">${after.name}</span> ${profile.elo} LP${change}`;
+  show("result");
+}
+
+$("queueBtn").onclick = queue;
+$("againBtn").onclick = queue;
+$("menuBtn").onclick = renderMenu;
+$("resetBtn").onclick = () => { if (confirm("Reset rank to 1000 LP?")) { profile = {elo:1000,w:0,l:0}; store.set(profile); renderMenu(); } };
+renderMenu();
+</script>
+</body>
+</html>
