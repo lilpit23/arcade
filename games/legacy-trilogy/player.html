@@ -10,15 +10,17 @@ body:has(#walk:checked) canvas{cursor:crosshair;touch-action:none}
 <label title="Fight back when an enemy comes close."><input id="battle" type="checkbox"> Auto-retaliate</label><span class="hint">Left-click: walk / attack / talk · Right-click: options · Click text to continue · Move: WASD/arrows · A: Space/J/Z · B: K/X · Start: Enter/E</span></div><div id="game"></div><script type="module">
 import {attachControls} from './field-controls.mjs';
 import {trilogyControls} from './keyboard.mjs';
+import {patchRom} from './romhack.mjs';
 const parentGame = window.parent.trilogySession;
 if (parentGame) {
-  const url=URL.createObjectURL(new Blob([parentGame.bytes]));
+  const rom = await patchRom(parentGame.code, parentGame.bytes);
+  const url=URL.createObjectURL(new Blob([rom.bytes]));
   Object.assign(window,{
     EJS_player:'#game',EJS_core:'mgba',EJS_gameUrl:url,EJS_gameName:'Trilogy-'+parentGame.code,
     EJS_pathtodata:'./engine/',EJS_startOnLoaded:true,EJS_threads:false,EJS_DEBUG_XX:true,
     EJS_defaultControls:trilogyControls(parentGame.code),
     EJS_disableDatabases:true,EJS_disableAutoLang:true,
-    EJS_onGameStart:()=>{parentGame.started(window.EJS_emulator.gameManager); attachControls(window.EJS_emulator,parentGame.code);},
+    EJS_onGameStart:()=>{parentGame.started(window.EJS_emulator.gameManager); attachControls(window.EJS_emulator,parentGame.code,rom.hacked);},
   });
   const loader=document.createElement('script');loader.src='./engine/loader.js';
   loader.onerror=()=>parentGame.failed('The campaign player could not load.');

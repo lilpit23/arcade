@@ -12,3 +12,5 @@
 *.ups
 *.ips
 .DS_Store
+!games/legacy-trilogy/romhack/*.ips
+games/legacy-trilogy/romhack/build/

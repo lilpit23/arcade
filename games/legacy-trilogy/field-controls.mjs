@@ -77,8 +77,54 @@ const keyMap = {w:UP, a:LEFT, s:DOWN, d:RIGHT, ArrowUp:UP, ArrowLeft:LEFT, Arrow
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
-export function attachControls(emu, code) {
+// The point-and-click ROM hack keeps a mailbox in IWRAM (see romhack/src).
+// The page writes a click into it; the game walks, talks and fights by itself.
+const MAGIC = 0x31434e50, BOX = {seq:0, kind:1, tx:4, ty:6, target:8, seen:12, active:13, magic:0x24, frame:0x2c, result:0x2e};
+const KIND = {walk:1, talk:2, use:2, enemy:3};
+
+function romMailbox(manager) {
+  let at = null, frame = -1, tries = 0;
+  const heap = () => manager.Module.HEAPU8;
+  // Find the mailbox in the emulator's memory by its marker, then make sure it is
+  // the live copy (its frame counter moves), not the marker inside the ROM itself.
+  function find() {
+    const h = heap(), words = new Uint32Array(h.buffer, 0, h.length >> 2), found = [];
+    for (let i = 0; i < words.length; i++) if (words[i] === MAGIC) found.push(i*4 - BOX.magic);
+    return found;
+  }
+  let candidates = [];
+  function locate() {
+    if (at !== null) return at;
+    const h = heap();
+    if (!candidates.length) { if (++tries > 40) return null; candidates = find().map(c => [c, h[c+BOX.frame] | h[c+BOX.frame+1]<<8]); return null; }
+    const live = candidates.find(([c, f]) => (h[c+BOX.frame] | h[c+BOX.frame+1]<<8) !== f);
+    candidates = [];
+    if (live) at = live[0];
+    return at;
+  }
+  return {
+    ready: () => locate() !== null,
+    gaveUp: () => tries > 40,
+    send(kind, x=0, y=0, target=0) {
+      const h = heap(), b = locate(); if (b === null) return false;
+      const v = new DataView(h.buffer, b, 16);
+      v.setInt16(BOX.tx, Math.round(x), true); v.setInt16(BOX.ty, Math.round(y), true);
+      v.setUint32(BOX.target, target >>> 0, true); h[b+BOX.kind] = kind;
+      h[b+BOX.seq] = (h[b+BOX.seq] + 1) & 255;
+      return true;
+    },
+    // Still carrying out the last click?
+    busy() { const h = heap(), b = locate(); return b !== null && (h[b+BOX.active] || h[b+BOX.seq] !== h[b+BOX.seen]); },
+    iwram(offset) { const b = locate(); return b === null ? null : b - 0x1000 + offset; },
+  };
+}
+
+export function attachControls(emu, code, hacked=false) {
   const manager = emu.gameManager;
+  const rom = hacked ? romMailbox(manager) : null;
+  const romReady = () => rom && rom.ready();
+  // Find the mailbox right away, so the very first click already goes to the game.
+  if (rom) { const look = setInterval(() => { if (rom.ready() || rom.gaveUp()) clearInterval(look); }, 150); }
   const canvas = emu.canvas;
   const clickMode = document.querySelector('#walk');
   const retaliate = document.querySelector('#battle');
@@ -132,7 +178,10 @@ export function attachControls(emu, code) {
     for (const key of keys) if (!held.has(key)) { manager.simulateInput(0,key,1); held.add(key); }
   }
   let act = 0;   // bumped by every new order, so a pending A press is cancelled
-  function stop() { order=null; marker=null; lastHero=null; nav=null; act++; inputs(); }
+  function stop() {
+    if (romReady() && order) rom.send(0);
+    order=null; marker=null; lastHero=null; nav=null; act++; inputs();
+  }
   function arrive(dirs) { stop(); if (interact.checked) press(dirs); }
   // Walked onto open ground: just stop, no button press.
   function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
@@ -223,6 +272,11 @@ export function attachControls(emu, code) {
     stop();
     order = {...o, until: performance.now() + (o.kind==='enemy' ? 30000 : 9000)};
     marker = {x:o.x, y:o.kind==='walk'?o.y-FEET:o.y-8, red:o.kind!=='walk', until:performance.now()+600};
+    if (romReady()) {
+      if (o.kind !== 'walk' && !interact.checked) rom.send(KIND.walk, o.x, o.y+FEET);
+      else rom.send(KIND[o.kind], o.x, o.y, o.id || 0);
+      order.rom = true; order.sentAt = performance.now();
+    }
   }
   canvas.addEventListener('pointermove', event => {
     if (!clickMode.checked || busy()) { label.style.display='none'; return; }
@@ -312,6 +366,12 @@ export function attachControls(emu, code) {
     latest = state;
     if (!state) { stop(); return; }
     if (state.talking) { if (order && order.kind!=='walk') stop(); inputs(); return; }
+    if (romReady()) {
+      // The patched game walks, talks and fights; just keep the target ring up to date.
+      if (order && order.rom && performance.now() - order.sentAt > 100 && !rom.busy()) { order = null; marker = marker; }
+      if (!order && retaliate.checked && state.nearest && state.distance <= 44) give(state.nearest);
+      return;
+    }
     const {hero} = state;
     if (order && (performance.now() > order.until || (lastHero && Math.hypot(hero.x-lastHero.x, hero.y-lastHero.y) > 45))) { stop(); return; }
 
@@ -393,7 +453,7 @@ export function attachControls(emu, code) {
 
   // Keep the game's Text Speed option on its fastest setting. The emulator has no
   // single-byte write, so patch a save state and load it back, only when needed.
-  const speed = textSpeed[code];
+  const speed = !hacked && textSpeed[code];
   let speedWrites = 0;
   const speedTimer = speed && setInterval(() => {
     if (busy() || speedWrites >= 6) return;
