@@ -9,13 +9,13 @@ const $=id=>document.getElementById(id);
 const req=r=>new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
 let db, cartridge, manager, mailbox, entry, phase=0, tick, url, bootTicks=0;
 const words={
-  1:['King Kai','Goku! You left two boot prints in my lawn. Come over by the house. We’ll work on your footing.'],
+  1:['King Kai','That Spirit Bomb you used on Kid Buu was big enough, Goku. My planet is small! Come by the house. Let’s see how light you can land.'],
   5:['King Kai','That pressure… Goku, put your hands down! Lord Beerus, what brings you to my planet?'],
   6:['Beerus','So this is the Saiyan who defeated Frieza. Come, then. Show me one good attack.'],
   8:['Beerus','My turn.'],
   9:['King Kai','Goku! …Still breathing. One tap, and he’s out cold.']
 };
-const goals={2:'Walk to King Kai beside the round house.',3:'Practice a punch with Numpad 4.',4:'Hold Numpad 6 to charge a ki blast, then release.',7:'Face Beerus. Get close and punch, or aim a ki blast at him.'};
+const goals={2:'Goku: “I’ll take it easy!”  ·  Walk to King Kai beside the round house.',3:'Practice a punch with Numpad 4.',4:'Hold Numpad 6 to charge a ki blast, then release.',7:'Face Beerus. Get close and punch, or aim a ki blast at him.'};
 function display(n){
   phase=n;$('loading').hidden=true;$('dialog').hidden=!words[n];$('objective').textContent=goals[n]||'';
   if(words[n]){[$('speaker').textContent,$('line').textContent]=words[n];$('advance').textContent=[1,5,6].includes(n)?'A ▸':''}
