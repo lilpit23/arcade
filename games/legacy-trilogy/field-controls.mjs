@@ -72,7 +72,7 @@ export function readField(code, bytes) {
 const A=8, B=0, SELECT=2, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7, L=10, R=11;
 // Keyboard: WASD or arrows to move, several choices for each button so any keyboard works.
 const keyMap = {w:UP, a:LEFT, s:DOWN, d:RIGHT, ArrowUp:UP, ArrowLeft:LEFT, ArrowDown:DOWN, ArrowRight:RIGHT,
-  ' ':A, j:A, z:A, Numpad4:A, k:B, x:B, Numpad6:B, Enter:START, e:START, q:SELECT, Shift:SELECT,
+  ' ':A, j:A, z:A, Numpad4:A, k:B, x:B, Numpad6:B, Enter:START, e:START, q:SELECT,
   u:L, Numpad7:L, i:R, Numpad9:R};
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
@@ -143,17 +143,78 @@ export function attachControls(emu, code, hacked=false) {
   const focusGame = () => { if (document.activeElement !== keys) keys.focus({preventScroll:true}); };
   focusGame();
   const down = new Set();
+  const shifts = new Set();
+  const moving = () => [...down].map(name => keyMap[name]).filter(k => k >= UP && k <= RIGHT);
+  let dashTimer, dashButton;
+  const send = (button, on) => manager.simulateInput(0, button, on ? 1 : 0);
+
+  // The first chapter has one ground-walk speed in sixteenths of a pixel.
+  // Mark our override in a spare mailbox byte so a restored checkpoint can
+  // undo it even when it was saved in the middle of a sprint.
+  function groundSpeed(on) {
+    const speed = rom?.iwram(0x7b2);
+    if (speed == null) return;
+    const ram = manager.Module.HEAPU8;
+    const mark = rom.iwram(0x1002);
+    if (on && !ram[mark] && ram[speed] === 16 && !ram[rom.iwram(0x7dc)]) {
+      ram[speed] = 32;
+      ram[mark] = 1;
+    } else if (!on && ram[mark] === 1) {
+      if (ram[speed] === 32) ram[speed] = 16;
+      ram[mark] = 0;
+    }
+  }
+  function updateSprint(alreadyWalking=false) {
+    clearTimeout(dashTimer);
+    const previous = dashButton;
+    dashButton = null;
+    const dirs = moving();
+    const button = dirs.at(-1);
+    const sprint = shifts.size > 0 && button !== undefined && !busy();
+    if (code === 'ALGE') { groundSpeed(sprint); return; }
+    if (previous !== null && previous !== undefined && dirs.includes(previous)) send(previous,true);
+    if (button === undefined || busy()) return;
+    // II and Buu use a directional double-tap to enter their native dash.
+    // Release once more on Shift-up to return to walking with the key held.
+    if (!sprint && previous !== button) return;
+    dashButton = sprint ? button : null;
+    const resume = () => { if (!busy() && moving().includes(button)) send(button,true); };
+    if (sprint) {
+      const firstTap = () => {
+        if (busy() || !moving().includes(button)) return;
+        send(button,true);
+        dashTimer = setTimeout(() => {
+          send(button,false);
+          dashTimer = setTimeout(resume,50);
+        },50);
+      };
+      if (alreadyWalking) { send(button,false); dashTimer = setTimeout(firstTap,50); }
+      else firstTap();
+    } else {
+      send(button,false);
+      dashTimer = setTimeout(resume,50);
+    }
+  }
   function key(e, pressed) {
-    if (busy() || e.ctrlKey || e.metaKey || e.altKey) return false;
+    if (pressed && (busy() || e.ctrlKey || e.metaKey || e.altKey)) return false;
+    if (e.key === 'Shift') {
+      const side = e.code || e.key;
+      if (shifts.has(side) !== pressed) {
+        if (pressed) shifts.add(side); else shifts.delete(side);
+        updateSprint(true);
+      }
+      return true;
+    }
     const name = e.code && e.code.startsWith('Numpad') ? e.code : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
     const button = keyMap[name];
     if (button === undefined) return false;
+    if (down.has(name) === pressed) return true;
     if (pressed) {
       if (button === START) startUsed = true;
-      if (down.has(name)) return true;         // key repeat
-      down.add(name); stop();                   // the keyboard takes over from a click order
+      down.add(name); stop();
     } else down.delete(name);
-    manager.simulateInput(0, button, pressed ? 1 : 0);
+    send(button, pressed || [...down].some(n => keyMap[n] === button));
+    if (button >= UP && button <= RIGHT) updateSprint();
     return true;
   }
   const onKey = pressed => e => { if (key(e, pressed)) { e.preventDefault(); e.stopPropagation(); } };
@@ -161,7 +222,18 @@ export function attachControls(emu, code, hacked=false) {
   window.addEventListener('keyup', onKey(false), true);
   window.trilogyKey = (e, pressed) => key(e, pressed);
   // Let go of everything if the window loses focus mid-press.
-  window.addEventListener('blur', () => { for (const name of down) manager.simulateInput(0, keyMap[name], 0); down.clear(); });
+  function releaseKeyboard() {
+    clearTimeout(dashTimer); dashButton = null; shifts.clear();
+    for (const name of down) send(keyMap[name],false);
+    down.clear();
+    if (romReady()) groundSpeed(false);
+  }
+  window.addEventListener('blur', releaseKeyboard);
+  window.parent.addEventListener('blur', releaseKeyboard);
+  window.addEventListener('pagehide', () => {
+    releaseKeyboard();
+    window.parent.removeEventListener('blur',releaseKeyboard);
+  }, {once:true});
 
   document.querySelector('#controls').hidden = false;
   // Point and click and auto-interact start on every time a chapter opens.
@@ -360,6 +432,8 @@ export function attachControls(emu, code, hacked=false) {
   function faces(dx, dy) { const h = dx<0?LEFT:RIGHT, v = dy<0?UP:DOWN; return Math.abs(dx) > Math.abs(dy) ? [h,v] : [v,h]; }
 
   function tick() {
+    if (busy() && (down.size || shifts.size)) releaseKeyboard();
+    if (romReady()) groundSpeed(shifts.size > 0 && moving().length > 0 && !busy());
     if (!order && !retaliate.checked) { latest = null; return; }
     if (busy()) { stop(); return; }
     const state = field();
@@ -469,6 +543,6 @@ export function attachControls(emu, code, hacked=false) {
   }, 1000);
   function suspend() { stop(); }
   window.addEventListener('blur', suspend);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseKeyboard(); suspend(); } });
   window.addEventListener('pagehide', () => { clearInterval(timer); clearInterval(speedTimer); suspend(); menu.remove(); }, {once:true});
 }
