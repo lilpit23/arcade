@@ -5,7 +5,7 @@ const patched = new Set(['ALGE']);
 export async function patchRom(code, bytes) {
   if (!patched.has(code)) return {bytes, hacked:false};
   try {
-    const response = await fetch(`./romhack/${code}.ips`);
+    const response = await fetch(new URL(`./romhack/${code}.ips`, import.meta.url));
     if (!response.ok) return {bytes, hacked:false};
     return {bytes: applyIps(bytes, new Uint8Array(await response.arrayBuffer())), hacked:true};
   } catch { return {bytes, hacked:false}; }

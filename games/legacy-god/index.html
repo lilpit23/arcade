@@ -1,11 +1,7 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Legacy of Goku 4 · G.O.D.</title><style>
-*{box-sizing:border-box}body{margin:0;background:#100f21;color:#faf2e3;font:16px system-ui,sans-serif}main{width:min(920px,100%);margin:auto;padding:16px}header,nav,.status{display:flex;align-items:center;flex-wrap:wrap;gap:12px}header{justify-content:space-between;margin-bottom:12px}a{color:#bfb0f1}h1{font-size:clamp(18px,4vw,32px);margin:0}canvas{width:100%;display:block;image-rendering:pixelated;touch-action:manipulation;cursor:crosshair;border:1px solid #62537a}button{background:#322c46;color:inherit;border:1px solid #746782;border-radius:5px;padding:9px 14px;font:inherit;cursor:pointer}button:hover,button:focus-visible{background:#544168}button[hidden]{display:none}.status{justify-content:space-between;font-weight:700}#scene{background:#221e34;border-left:4px solid #eeb562;padding:12px 16px;min-height:74px;margin:10px 0}#speaker{color:#ffc571}p{margin:4px 0}.hint{font-size:14px;color:#c7bfd4;margin:12px 0}nav{gap:8px}progress{accent-color:#8be3a3;width:80px}
-</style></head><body><main><header><h1>Legacy of Goku 4 · G.O.D.</h1><a href="https://lilpit23.github.io/arcade/full-games.html">Full Games</a></header>
-<div class="status"><span>King Kai’s planet</span><label>Goku <progress id="hp" value="100" max="100"></progress> <span id="health">100 HP</span></label></div>
-<canvas width="384" height="224" tabindex="0" aria-label="Training field. Use WASD or click the grass to move."></canvas>
-<section id="scene" aria-live="polite"><strong id="speaker"></strong><p id="line"></p></section>
-<nav aria-label="Game controls"><button id="next">Continue</button><button id="punch" hidden>Punch</button><button id="blast" hidden>Ki blast</button><button id="again" hidden>Replay scene</button><label><input type="checkbox" id="sprint"> Auto-sprint</label></nav>
-<p class="hint">WASD or arrows to move · Shift to sprint · Numpad 4 to punch or continue · Numpad 6 for ki · Click a target to approach and attack</p>
-</main><script type="module" src="game.mjs"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Legacy of Goku 4 · G.O.D.</title><link rel="stylesheet" href="field.css"></head>
+<body><main><header><h1>Legacy of Goku 4 <small>G.O.D.</small></h1><a href="https://lilpit23.github.io/arcade/full-games.html">Full Games</a></header>
+<section id="library"><h2>King Kai’s planet</h2><p id="status" role="status">Checking your cartridge library…</p><input hidden id="file" aria-label="Import The Legacy of Goku USA cartridge" type="file" accept=".gba"><button id="start" hidden>Start training</button></section>
+<section id="play" hidden><div id="screen"><div id="game"></div><button id="dialog" hidden><strong id="speaker"></strong><span id="line"></span><b id="advance"></b></button><div id="loading">Traveling to King Kai’s planet…</div></div>
+<p id="objective" role="status"></p>
+<div id="controls" hidden><label><input id="walk" type="checkbox"> Point and click</label><label><input id="sprint" type="checkbox"> Auto-sprint</label><input id="interact" type="checkbox" hidden><input id="battle" type="checkbox" hidden><button id="replay" hidden>Replay lesson</button></div>
+<p class="hint">WASD to move · Shift to sprint · Numpad 4 to punch or talk · Hold and release Numpad 6 for ki</p></section></main><script type="module" src="game.mjs"></script></body></html>

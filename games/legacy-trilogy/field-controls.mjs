@@ -572,4 +572,5 @@ export function attachControls(emu, code, hacked=false) {
   window.addEventListener('blur', suspend);
   document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseKeyboard(); suspend(); } });
   window.addEventListener('pagehide', () => { clearInterval(timer); clearInterval(speedTimer); suspend(); menu.remove(); }, {once:true});
+  return rom;
 }
