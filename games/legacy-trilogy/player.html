@@ -7,7 +7,8 @@ body:has(#walk:checked) canvas{cursor:crosshair;touch-action:none}
 </style></head>
 <body><div id="controls" hidden><label title="Left-click to walk, attack or talk. Right-click for options."><input id="walk" type="checkbox" checked> Point and click</label>
 <label title="Press A when you arrive: talk to people, open chests, pick up items."><input id="interact" type="checkbox" checked> Auto-interact</label>
-<label title="Fight back when an enemy comes close."><input id="battle" type="checkbox"> Auto-retaliate</label><span class="hint">Left-click: walk / attack / talk · Right-click: options · Click text to continue · Move: WASD/arrows · Hold Shift to sprint · A: Space/J/Z · B: K/X · Start: Enter/E</span></div><div id="game"></div><script type="module">
+<label><input id="sprint" type="checkbox"> Auto-sprint</label>
+<label title="Fight back when an enemy comes close."><input id="battle" type="checkbox"> Auto-retaliate</label><span class="hint">Left-click: walk / attack / talk · Right-click: options · Click text to continue · Move: WASD/arrows · Hold Shift to sprint · Numpad 4/6: A/B · Numpad 7/9: L/R · E: Start · Q: Select</span></div><div id="game"></div><script type="module">
 import {attachControls} from './field-controls.mjs';
 import {trilogyControls} from './keyboard.mjs';
 import {patchRom} from './romhack.mjs';

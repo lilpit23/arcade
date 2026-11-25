@@ -71,9 +71,9 @@ export function readField(code, bytes) {
 // GBA buttons as RetroPad IDs.
 const A=8, B=0, SELECT=2, START=3, UP=4, DOWN=5, LEFT=6, RIGHT=7, L=10, R=11;
 // Keyboard: WASD or arrows to move, several choices for each button so any keyboard works.
-const keyMap = {w:UP, a:LEFT, s:DOWN, d:RIGHT, ArrowUp:UP, ArrowLeft:LEFT, ArrowDown:DOWN, ArrowRight:RIGHT,
-  ' ':A, j:A, z:A, Numpad4:A, k:B, x:B, Numpad6:B, Enter:START, e:START, q:SELECT,
-  u:L, Numpad7:L, i:R, Numpad9:R};
+const aliases = {Space:A, KeyJ:A, KeyZ:A, KeyK:B, KeyX:B, Enter:START, KeyU:L, KeyI:R,
+  ArrowUp:UP, ArrowDown:DOWN, ArrowLeft:LEFT, ArrowRight:RIGHT};
+const gbaButtons = [A,B,SELECT,START,UP,DOWN,LEFT,RIGHT,L,R];
 const FEET = 8;   // a sprite's feet sit about this far below the middle of its body
 const verbs = {enemy:'Attack', talk:'Talk-to', use:'Use', walk:'Walk here'};
 
@@ -129,6 +129,7 @@ export function attachControls(emu, code, hacked=false) {
   const clickMode = document.querySelector('#walk');
   const retaliate = document.querySelector('#battle');
   const interact = document.querySelector('#interact');
+  const autoSprint = document.querySelector('#sprint');
   const held = new Set();
   // Without a known text-box flag (second game), guess from a click that can't move the hero.
   const guessText = !layouts[code]?.dialog;
@@ -142,9 +143,10 @@ export function attachControls(emu, code, hacked=false) {
   const keys = emu.elements.parent;
   const focusGame = () => { if (document.activeElement !== keys) keys.focus({preventScroll:true}); };
   focusGame();
-  const down = new Set();
+  const down = new Map();
+  let clickDirections = [];
   const shifts = new Set();
-  const moving = () => [...down].map(name => keyMap[name]).filter(k => k >= UP && k <= RIGHT);
+  const moving = () => [...down.values(), ...clickDirections].filter(k => k >= UP && k <= RIGHT);
   let dashTimer, dashButton;
   const send = (button, on) => manager.simulateInput(0, button, on ? 1 : 0);
 
@@ -170,7 +172,7 @@ export function attachControls(emu, code, hacked=false) {
     dashButton = null;
     const dirs = moving();
     const button = dirs.at(-1);
-    const sprint = shifts.size > 0 && button !== undefined && !busy();
+    const sprint = (autoSprint.checked || shifts.size > 0) && button !== undefined && !busy();
     if (code === 'ALGE') { groundSpeed(sprint); return; }
     if (previous !== null && previous !== undefined && dirs.includes(previous)) send(previous,true);
     if (button === undefined || busy()) return;
@@ -180,6 +182,8 @@ export function attachControls(emu, code, hacked=false) {
     dashButton = sprint ? button : null;
     const resume = () => { if (!busy() && moving().includes(button)) send(button,true); };
     if (sprint) {
+      const scene = field();
+      if (!scene || scene.talking) { dashButton = null; return; }
       const firstTap = () => {
         if (busy() || !moving().includes(button)) return;
         send(button,true);
@@ -197,23 +201,35 @@ export function attachControls(emu, code, hacked=false) {
   }
   function key(e, pressed) {
     if (pressed && (busy() || e.ctrlKey || e.metaKey || e.altKey)) return false;
-    if (e.key === 'Shift') {
-      const side = e.code || e.key;
-      if (shifts.has(side) !== pressed) {
-        if (pressed) shifts.add(side); else shifts.delete(side);
+    const name = e.code || e.key;
+    if (pressed && (e.target?.isContentEditable || e.target?.closest?.('textarea,select,input:not([type=checkbox])') ||
+        (e.target?.closest?.('button,input[type=checkbox],a') && ['Space','Enter'].includes(name)))) return false;
+    const num = /^Numpad([0-9])$/.exec(name);
+    const keyCode = num ? 96 + Number(num[1]) : e.keyCode;
+    const controls = emu.controls[0];
+    const assigned = Object.keys(controls).find(id => controls[id]?.value === keyCode);
+    if (e.key === 'Shift' && (shifts.has(name) || assigned === undefined)) {
+      if (shifts.has(name) !== pressed) {
+        if (pressed) shifts.add(name); else shifts.delete(name);
         updateSprint(true);
       }
       return true;
     }
-    const name = e.code && e.code.startsWith('Numpad') ? e.code : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
-    const button = keyMap[name];
-    if (button === undefined) return false;
-    if (down.has(name) === pressed) return true;
+    if (pressed && down.has(name)) return true;
+    let button = down.get(name);
     if (pressed) {
+      // Give configured bindings (including emulator shortcuts) priority over aliases.
+      button = assigned === undefined ? aliases[name] : Number(assigned);
+      if (!gbaButtons.includes(button)) return false;
+      if (assigned === undefined && controls[button]?.value !== emu.defaultControllers[0][button]?.value) return false;
       if (button === START) startUsed = true;
-      down.add(name); stop();
-    } else down.delete(name);
-    send(button, pressed || [...down].some(n => keyMap[n] === button));
+      stop();
+      down.set(name, button);
+    } else {
+      if (button === undefined) return false;
+      down.delete(name);
+    }
+    send(button, pressed || [...down.values()].includes(button));
     if (button >= UP && button <= RIGHT) updateSprint();
     return true;
   }
@@ -224,7 +240,7 @@ export function attachControls(emu, code, hacked=false) {
   // Let go of everything if the window loses focus mid-press.
   function releaseKeyboard() {
     clearTimeout(dashTimer); dashButton = null; shifts.clear();
-    for (const name of down) send(keyMap[name],false);
+    for (const button of down.values()) send(button,false);
     down.clear();
     if (romReady()) groundSpeed(false);
   }
@@ -240,14 +256,25 @@ export function attachControls(emu, code, hacked=false) {
   clickMode.checked = true;
   interact.checked = true;
   try { retaliate.checked = localStorage.getItem('trilogy.retaliate') === 'on'; } catch {}
+  try { autoSprint.checked = localStorage.getItem('trilogy.autoSprint') === 'on'; } catch {}
+  autoSprint.onchange = () => {
+    remember('trilogy.autoSprint', autoSprint.checked);
+    updateSprint(true);
+    focusGame();
+  };
   clickMode.onchange = () => stop();
   interact.onchange = () => stop();
   retaliate.onchange = () => { stop(); remember('trilogy.retaliate', retaliate.checked); };
   function remember(key, on) { try { localStorage.setItem(key, on ? 'on' : 'off'); } catch {} }
 
-  function inputs(keys=[]) {
-    for (const key of held) if (!keys.includes(key)) { manager.simulateInput(0,key,0); held.delete(key); }
+  function inputs(keys=[], travel=false) {
+    const directions = travel ? keys.filter(k => k >= UP && k <= RIGHT) : [];
+    for (const key of held) if (!keys.includes(key)) { if (![...down.values()].includes(key)) send(key,false); held.delete(key); }
     for (const key of keys) if (!held.has(key)) { manager.simulateInput(0,key,1); held.add(key); }
+    if (directions.join() !== clickDirections.join()) {
+      clickDirections = directions;
+      updateSprint();
+    }
   }
   let act = 0;   // bumped by every new order, so a pending A press is cancelled
   function stop() {
@@ -256,10 +283,10 @@ export function attachControls(emu, code, hacked=false) {
   }
   function arrive(dirs) { stop(); if (interact.checked) press(dirs); }
   // Walked onto open ground: just stop, no button press.
-  function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen; }
+  function busy() { return document.hidden || emu.paused || emu.settingsMenuOpen || emu.disksMenuOpen || emu.isPopupOpen(); }
   function field() { const s = readField(code, manager.getState()); if (s) startUsed = true; return s; }
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  async function tap(key, ms=70) { inputs(); manager.simulateInput(0,key,1); await wait(ms); manager.simulateInput(0,key,0); }
+  async function tap(key, ms=70) { inputs(); manager.simulateInput(0,key,1); await wait(ms); if (![...down.values()].includes(key)) send(key,false); }
   // Settle, turn toward the target, then press A: talks, opens, picks up or reads what
   // is there. If no text box opens, try again facing along the other axis (someone
   // standing diagonally). Any new click or key press cancels it.
@@ -267,7 +294,7 @@ export function attachControls(emu, code, hacked=false) {
     const id = act;
     for (const dir of dirs) {
       await wait(120); if (id !== act) return;
-      inputs([dir]); await wait(130); inputs(); await wait(70);
+      inputs([dir]); await wait(130); if (id !== act) return; inputs(); await wait(70);
       if (id !== act || !clickMode.checked) return;
       await tap(A, 110); await wait(450);
       if (id !== act || !layouts[code].dialog) return;
@@ -433,7 +460,7 @@ export function attachControls(emu, code, hacked=false) {
 
   function tick() {
     if (busy() && (down.size || shifts.size)) releaseKeyboard();
-    if (romReady()) groundSpeed(shifts.size > 0 && moving().length > 0 && !busy());
+    if (romReady()) groundSpeed((autoSprint.checked || shifts.size > 0) && (moving().length > 0 || (order?.rom && rom.busy())) && !busy());
     if (!order && !retaliate.checked) { latest = null; return; }
     if (busy()) { stop(); return; }
     const state = field();
@@ -500,7 +527,7 @@ export function attachControls(emu, code, hacked=false) {
     else if (++nav.idle > 60 && !flip()) { giveUp(); return; }
     nav.stall = moved < 0.4 ? nav.stall+1 : 0;
     if (!nav.follow) {
-      if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4)); return; }
+      if (nav.stall < 3) { inputs(steer(dx, dy, order.kind==='walk' ? 2 : 4), true); return; }
       // Bumped into something right where you clicked (a person, chest or sign): use it.
       if (order.kind === 'walk' && dist <= 20) { arrive(faces(dx,dy)); return; }
       const lean = exact - Math.round(exact);
@@ -521,7 +548,7 @@ export function attachControls(emu, code, hacked=false) {
         if (nav.dir === goal) { nav.follow = false; nav.turns = 0; }
       }
     }
-    inputs(DIRS[nav.dir]);
+    inputs(DIRS[nav.dir], true);
   }
   const timer = setInterval(tick, 50);
 
